@@ -26,13 +26,15 @@ def nav():
     if option == "a":
         add(con)
     elif option == "b":
-        remove()
+        remove(con)
     elif option == "c":
-        modify()
+        modify(con)
     elif option == "d":
-        stats()
+        stats(con)
     else:
-        "Quitting program."
+        print("Quitting program.")
+        return
+    nav()
 
 
 def main():

@@ -36,8 +36,8 @@ def add(con):
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (team_id, team_name, team_group, won, lost, draw, goal_for, goal_agnst, goal_diff, points))
 
-    elif selected_table == "matches":
-        match_no = input("Enter the match number: ")
+    elif selected_table == "match":
+        match_id = input("Enter the match number: ")
         play_stage = input("Enter the play stage: ")
         play_date = input("Enter the date of the match: ")
         venue_id = input("Enter the venue_id: ")
@@ -49,11 +49,11 @@ def add(con):
         team1_result = input("Enter the the first team's result: ")
         team2_result = input("Enter the the second team's result: ")
 
-        con.execute("INSERT INTO matches "
-                    "('match_no', 'play_stage', 'play_date', 'venue_id', 'audience', 'team1_id', 'team2_id', "
+        con.execute("INSERT INTO match "
+                    "('match_id', 'play_stage', 'play_date', 'venue_id', 'audience', 'team1_id', 'team2_id', "
                     "'team1_goals', 'team2_goals', 'team1_result', 'team2_result') "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
-                        match_no, play_stage, play_date, venue_id, audience, team1_id, team2_id, team1_goals,
+                        match_id, play_stage, play_date, venue_id, audience, team1_id, team2_id, team1_goals,
                         team2_goals, team1_result, team2_result))
 
     elif selected_table == "player":
@@ -74,13 +74,25 @@ def add(con):
     print_table(con, selected_table)
 
 
-def remove():
+def remove(con):
+    selected_table, table_names = select_table(con)
+    print(f"You selected to remove from '{selected_table}'")
+    print(f"\nThese are the current entries in the {selected_table} table: \n")
+    print_table(con, selected_table)
+
+    id_col_name = f'{selected_table}_id'
+    id = input(f"Enter the {id_col_name} of the row to be removed: ")
+
+    con.execute(f"DELETE FROM {selected_table} WHERE {id_col_name} = ?", (id,))
+
+    con.commit()
+
+    print("Success! Below is the updated table.")
+    print_table(con, selected_table)
+
+def modify(con):
     pass
 
 
-def modify():
-    pass
-
-
-def stats():
+def stats(con):
     print("Below is a list of all numerical columns.")

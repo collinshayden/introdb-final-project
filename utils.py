@@ -3,7 +3,7 @@
 def select_table(con):
     tables = con.execute("SELECT name FROM sqlite_master WHERE type='table';")
     table_names = []
-    print("Select a table to add to:")
+    print("Select a table to edit:")
     for name in tables.fetchall():
         print(name[0])
         table_names.append(name[0])
