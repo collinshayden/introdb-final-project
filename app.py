@@ -1,8 +1,12 @@
+# Intro Databases Final Project
 # Hayden Collins & Abbey Knobel
 # Created on 2023/11/28
 
 import sqlite3
+from menu_options import *
 import parser
+
+con = sqlite3.connect("soccer.db")
 
 
 def nav():
@@ -20,7 +24,7 @@ def nav():
             print("Invalid option.")
 
     if option == "a":
-        add()
+        add(con)
     elif option == "b":
         remove()
     elif option == "c":
@@ -31,19 +35,8 @@ def nav():
         "Quitting program."
 
 
-def add():
-    pass
+def main():
+    nav()
 
 
-def remove():
-    pass
-
-
-def modify():
-    pass
-
-
-def stats():
-    print("Below is a list of all numerical columns.")
-
-
+main()
