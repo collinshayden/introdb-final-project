@@ -90,8 +90,43 @@ def remove(con):
     print("Success! Below is the updated table.")
     print_table(con, selected_table)
 
+
 def modify(con):
-    pass
+    selected_table, table_names = select_table(con)
+    print(f"You selected to modify a row from '{selected_table}'")
+    print(f"\nThese are the current entries in the {selected_table} table: \n")
+    print_table(con, selected_table)
+
+    primary_key = f'{selected_table}_id'
+    valid_key = False
+
+    while not valid_key:
+        id = input(f"Enter the {primary_key} of the row to be modified: ")
+
+        cursor = con.cursor()
+        cursor.execute(f"SELECT * FROM {selected_table} WHERE {primary_key} = ?", (id,))
+        row = cursor.fetchone()  # Fetch a single row
+        if row:
+            print(row)
+            valid_key = True
+        else:
+            print("No matching row found, please try again")
+
+    print("Here is a list of columns names:")
+    columns = get_column_names(con, selected_table)
+    print(columns)
+    selected_column = ""
+    while selected_column not in columns:
+        selected_column = input("Enter the column name that you would like to modify: ")
+        if selected_column not in columns:
+            print("Invalid selection.")
+
+    new_value = input("Enter the new value you would like to set: ")
+    con.execute(f"UPDATE {selected_table} SET {selected_column} = ? WHERE {primary_key} = ?", (new_value, id))
+    con.commit()
+
+    print("Success! Below is the updated table.")
+    print_table(con, selected_table)
 
 
 def stats(con):
