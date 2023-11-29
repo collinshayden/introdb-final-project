@@ -80,10 +80,10 @@ def remove(con):
     print(f"\nThese are the current entries in the {selected_table} table: \n")
     print_table(con, selected_table)
 
-    id_col_name = f'{selected_table}_id'
-    id = input(f"Enter the {id_col_name} of the row to be removed: ")
+    primary_key = f'{selected_table}_id'
+    id = input(f"Enter the {primary_key} of the row to be removed: ")
 
-    con.execute(f"DELETE FROM {selected_table} WHERE {id_col_name} = ?", (id,))
+    con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
 
     con.commit()
 
@@ -117,7 +117,7 @@ def modify(con):
     print(columns)
     selected_column = ""
     while selected_column not in columns:
-        selected_column = input("Enter the column name that you would like to modify: ")
+        selected_column = input("Enter the column name that you would like to modify: ").lower()
         if selected_column not in columns:
             print("Invalid selection.")
 
@@ -139,7 +139,7 @@ def stats(con):
 
     selected_column = ""
     while selected_column not in column_table_pairs.keys():
-        selected_column = input("Enter a column name: ")
+        selected_column = input("Enter a column name: ").lower()
         if selected_column not in column_table_pairs.keys():
             print("Invalid selection.")
     selected_table = column_table_pairs[selected_column]
@@ -148,9 +148,9 @@ def stats(con):
     print("Below are available the operations:")
     print(operations)
     selected_operation = ""
-    while selected_operation.lower() not in operations:
-        selected_operation = input("Choose an operation to perform: ")
-        if selected_operation.lower() not in operations:
+    while selected_operation not in operations:
+        selected_operation = input("Choose an operation to perform: ").lower()
+        if selected_operation not in operations:
             print("Invalid selection.")
 
     if selected_operation == "min":
