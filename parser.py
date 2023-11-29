@@ -1,41 +1,84 @@
 from pyparsing import *
+import sqlite3
+
+#connect to sqlite
+con = sqlite3.connect('soccer.db')
+
+#create the cursor 
+cur = con.cursor() 
 
 
-# parser function will take in user_input and output
+def execute_query(query):
+    result_list = []
+    cur.execute(query)
+    result = cur.fetchall()
+    for item in result:
+        result_list.append(item[0])
+    return result_list
+    
+def retrieve_cols(table_name):
+    name_list = []
+    cols = cur.execute(f'PRAGMA table_info({table_name})')
+    cols= cur.fetchall()
+    for index in range(0,len(cols)):
+        #pull the column names
+        col_name = cols[index][1]
+        #add the column names to the list
+        name_list.append(col_name)
+    return name_list
+
+def check_where_query():
+    pass
+
 def parse(user_input):
-    # list of expected values
-    summit_heights = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000]
-    locations = ["utah", "colorado", "vermont", "california", "montana", "ontario", "michigan", "washington",
-                 "british-colombia", "wyoming", "alberta", "new-hampshire", "oregon", "maine", "idaho", "new-mexico",
-                 "quebec", "west-virginia", "new-york"]
-    resorts = ["Windham Mountain", "The Highlands", "Snowshoe", "Summit at Snoqualmie", "Winter Park", "Tremblant",
-               "Taos", "Sunshine Village", "Sunday River", "Sun ValleyI", "Sugarloaf", "Sugarbush", "Stratton",
-               "Steamboat", "Solitude", "Snowbird", "Snowbasin", "Snow Summit", "Revelstoke", "Palisades Tahoe",
-               "Mt. Norquay", "Mt. Bhelor", "Mammoth", "Loon Mountain", "Lake Louise", "Killington", "June Mountain",
-               "Jackson Hole", "Eldora", "Deer Valley", "Cypress Mountain", "Crystal Mountain", "Copper Mountain",
-               "Brighton", "Boyne Mountain", "Blue Mountain", "Big Sky", "Bear Mountain", "Aspen Snowmass",
-               "Arapahoe Basin", "Alta", ]
-    snowfalls = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
-    difficulties = ["Beginner", "Intermediate", "Advanced", "Expert"]
-    types = ["Groomer", "Bumps", "Chute", "Glades"]
+    
+    location_words = ['matches', 'games']
+    all_tables = ['matches', 'games', 'player','team','venue','city']
+    #this pulls the column names with some extra non-useful data 
+    match_cols = retrieve_cols('matches')
+    player_cols = retrieve_cols('player')
+    team_cols = retrieve_cols('team')
+    venue_cols = retrieve_cols('venue')
+    city_cols = retrieve_cols('city')
+    all_cols = match_cols + player_cols + team_cols + venue_cols + city_cols 
+    #create a list of possible locations for the cities or venues 
+    cities = execute_query("SELECT city FROM city")
+    venues = execute_query("SELECT venue_name FROM venue")
+    
+    player_countries = execute_query("SELECT name FROM team where name not null")
+    player_clubs = execute_query("SELECT playing_club FROM player where playing_club NOT null")
+    all_player_teams = player_clubs + player_countries
+    locations = cities + venues
+    positions = execute_query("SELECT posi_to_play FROM player")
+    match_no = execute_query("SELECT match_no FROM matches")
 
     # Keywords
-    sum = CaselessLiteral("Summit")
-    r = CaselessLiteral("Resort")
-    loc = CaselessLiteral("Location")
-    sn = CaselessLiteral("Snowfall")
-    pt = CaselessLiteral("popular trails")
-    t = CaselessLiteral("type")
-    h = CaselessLiteral("help")
-    d = CaselessLiteral("difficulty")
+    where_operator = CaselessLiteral("where")
+    in_operator = CaselessLiteral("in")
+    from_operator = CaselessLiteral("from")
+    of_operator = CaselessLiteral("of")
+    match_keyword = CaselessLiteral("matches")
+    game_keyword = CaselessLiteral("games")
+    venue_keyword = CaselessLiteral("venues")
+    player_keyword = CaselessLiteral("players")
+    team_keyword = CaselessLiteral("teams")
+    play_keyword = CaselessLiteral("play in")
+    word = Word(alphas)
+    
+    
 
     # define parser variables
+    match_col = oneOf(match_cols, caseless = True)
+    player_col = oneOf(player_cols, caseless = True)
+    team_col = oneOf(team_cols, caseless = True)
+    venue_col = oneOf(venue_cols, caseless = True)
+    city_col = oneOf(city_cols, caseless = True)
     location = oneOf(locations, caseless=True)
-    snow = oneOf([str(snowfall) for snowfall in snowfalls])
-    summit = oneOf([str(summit_height) for summit_height in summit_heights])
-    dif = oneOf(difficulties, caseless=True)
-    typ = oneOf(types, caseless=True)
-    resort = oneOf(resorts, caseless=True)
+    all_player_teams = oneOf(all_player_teams, caseless = True)
+    all_tables = oneOf(all_tables, caseless = True)
+    all_cols = oneOf(all_cols, caseless =  True)
+    positions = oneOf(positions, caseless = True)
+    match_no = oneOf([str(match) for match in match_no])
 
     # define operators in grammar
     equals_operator = Literal("==")
@@ -44,33 +87,28 @@ def parse(user_input):
     and_operator = CaselessLiteral("and")
     of_operator = CaselessLiteral("of")
     or_operator = CaselessLiteral("or")
-    comparison_op = (greater_operator | less_operator)
+    comparison_operator = (greater_operator | less_operator | equals_operator)
 
-    # create identifiable expressions ==
-    loc_exp = (loc + equals_operator + location)("loc_exp")
-    typ_exp = (t + equals_operator + typ)("typ_exp")
-    diff_exp = (d + equals_operator + dif)("diff_exp")
-    res_exp = (r + equals_operator + resort)("res_exp")
-
-    # create expressions with <,>
-    sum_exp = (sum + comparison_op + summit)("sum_exp")
-    snow_exp = (sn + comparison_op + snow)("snow_exp")
-    # create expressions with of
-    pt_exp = ((pt + of_operator + resort)("pt_exp"))
+    # create potential query expressions
+    loc_exp = ((match_keyword|game_keyword|venue_keyword) + in_operator + location)("game_loc_exp")
+    player_team_exp = (player_keyword + from_operator + all_player_teams)("player_team_exp")
+    where_exp = (all_tables + where_operator + all_cols + comparison_operator + word)("where_exp")
+    play_exp = ((player_keyword|team_keyword) + play_keyword + (location|positions| match_no))("play_exp")
+    
 
     # create and_expr
-    expressions_list = [res_exp, sum_exp, pt_exp, loc_exp, snow_exp, typ_exp, diff_exp]
-    and_exp = (Or(expressions_list) + and_operator + Or(expressions_list))
-    or_exp = (Or(expressions_list) + or_operator + Or(expressions_list))
+    # expressions_list = [res_exp, sum_exp, pt_exp, loc_exp, snow_exp, typ_exp, diff_exp]
+    # and_exp = (Or(expressions_list) + and_operator + Or(expressions_list))
+    # or_exp = (Or(expressions_list) + or_operator + Or(expressions_list))
 
     expression = Forward()
 
     # expression definition (for grammar)
-    expression << (and_exp | or_exp | loc_exp | pt_exp | h | snow_exp | typ_exp | diff_exp | res_exp | sum_exp)
+    expression << (loc_exp | player_team_exp | where_exp | play_exp)
 
     # accepts strings in language and returns the parsed input
     try:
-        result = expression.parseString(user_input)
+        result = list(expression.parseString(user_input))
         if (user_input.lower() == "help"):
             return 1
         else:
@@ -78,7 +116,7 @@ def parse(user_input):
     except Exception as e:
         return 0
 
-
+res = parse('players play in GK')
 # main program to call parser function and firestorm function
 # def main():
 #     intro = '''Dear beloved user,
