@@ -130,4 +130,45 @@ def modify(con):
 
 
 def stats(con):
-    print("Below is a list of all numerical columns.")
+    operations = ["min", "max", "std", "median", "avg"]
+    print("Below is a list of all numerical columns paired with their respective tables.")
+    column_table_pairs = get_numeric_columns(con)
+    print("\nTable Name - Column Name")
+    for column, table in column_table_pairs.items():
+        print(f"{table} - {column}")
+
+    selected_column = ""
+    while selected_column not in column_table_pairs.keys():
+        selected_column = input("Enter a column name: ")
+        if selected_column not in column_table_pairs.keys():
+            print("Invalid selection.")
+    selected_table = column_table_pairs[selected_column]
+
+    print(f"You selected {selected_column}.")
+    print("Below are available the operations:")
+    print(operations)
+    selected_operation = ""
+    while selected_operation.lower() not in operations:
+        selected_operation = input("Choose an operation to perform: ")
+        if selected_operation.lower() not in operations:
+            print("Invalid selection.")
+
+    if selected_operation == "min":
+        cursor = con.cursor()
+        cursor.execute(f"SELECT MIN({selected_column}) FROM {selected_table}")
+        min_value = cursor.fetchone()[0]
+        print(f"The minimum value in {selected_column} is {min_value}")
+    elif selected_operation == "max":
+        cursor = con.cursor()
+        cursor.execute(f"SELECT MAX({selected_column}) FROM {selected_table}")
+        max_value = cursor.fetchone()[0]
+        print(f"The maximum value in {selected_column} is {max_value}")
+    elif selected_operation == "std":
+        std = calculate_stats(con, selected_column, selected_table, selected_operation)
+        print(f"The standard deviation of {selected_column} is {std:.2f}")
+    elif selected_operation == "median":
+        median = calculate_stats(con, selected_column, selected_table, selected_operation)
+        print(f"The mean {selected_column} is {median:.2f}")
+    elif selected_operation == "avg":
+        mean = calculate_stats(con, selected_column, selected_table, selected_operation)
+        print(f"The mean {selected_column} is {mean:.2f}")

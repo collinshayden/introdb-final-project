@@ -34,11 +34,25 @@ def nav():
     else:
         print("Quitting program.")
         return
-    nav()
+
+    option = ""
+    while option not in ["a", "b"]:
+        print("Choose an option: ")
+        print(" (a) Return to Nav")
+        print(" (b) Quit")
+        option = input(" => ").lower()
+        if option not in ["a", "b"]:
+            print("Invalid option.")
+    if option == "a":
+        nav()
+    else:
+        print("Quitting program.")
+        return
 
 
 def main():
     nav()
+    con.close()
 
 
 main()
