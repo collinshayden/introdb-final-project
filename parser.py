@@ -1,11 +1,11 @@
 from pyparsing import *
 import sqlite3
 
-#connect to sqlite
+# connect to sqlite
 con = sqlite3.connect('soccer.db')
 
-#create the cursor 
-cur = con.cursor() 
+# create the cursor
+cur = con.cursor()
 
 
 def execute_query(query):
@@ -15,36 +15,38 @@ def execute_query(query):
     for item in result:
         result_list.append(item[0])
     return result_list
-    
+
+
 def retrieve_cols(table_name):
     name_list = []
     cols = cur.execute(f'PRAGMA table_info({table_name})')
-    cols= cur.fetchall()
-    for index in range(0,len(cols)):
-        #pull the column names
+    cols = cur.fetchall()
+    for index in range(0, len(cols)):
+        # pull the column names
         col_name = cols[index][1]
-        #add the column names to the list
+        # add the column names to the list
         name_list.append(col_name)
     return name_list
+
 
 def check_where_query():
     pass
 
+
 def parse(user_input):
-    
     location_words = ['matches', 'games']
-    all_tables = ['matches', 'games', 'player','team','venue','city']
-    #this pulls the column names with some extra non-useful data 
+    all_tables = ['matches', 'games', 'player', 'team', 'venue', 'city']
+    # this pulls the column names with some extra non-useful data
     match_cols = retrieve_cols('matches')
     player_cols = retrieve_cols('player')
     team_cols = retrieve_cols('team')
     venue_cols = retrieve_cols('venue')
     city_cols = retrieve_cols('city')
-    all_cols = match_cols + player_cols + team_cols + venue_cols + city_cols 
-    #create a list of possible locations for the cities or venues 
+    all_cols = match_cols + player_cols + team_cols + venue_cols + city_cols
+    # create a list of possible locations for the cities or venues
     cities = execute_query("SELECT city FROM city")
     venues = execute_query("SELECT venue_name FROM venue")
-    
+
     player_countries = execute_query("SELECT name FROM team where name not null")
     player_clubs = execute_query("SELECT playing_club FROM player where playing_club NOT null")
     all_player_teams = player_clubs + player_countries
@@ -64,20 +66,18 @@ def parse(user_input):
     team_keyword = CaselessLiteral("teams")
     play_keyword = CaselessLiteral("play in")
     word = Word(alphas)
-    
-    
 
     # define parser variables
-    match_col = oneOf(match_cols, caseless = True)
-    player_col = oneOf(player_cols, caseless = True)
-    team_col = oneOf(team_cols, caseless = True)
-    venue_col = oneOf(venue_cols, caseless = True)
-    city_col = oneOf(city_cols, caseless = True)
+    match_col = oneOf(match_cols, caseless=True)
+    player_col = oneOf(player_cols, caseless=True)
+    team_col = oneOf(team_cols, caseless=True)
+    venue_col = oneOf(venue_cols, caseless=True)
+    city_col = oneOf(city_cols, caseless=True)
     location = oneOf(locations, caseless=True)
-    all_player_teams = oneOf(all_player_teams, caseless = True)
-    all_tables = oneOf(all_tables, caseless = True)
-    all_cols = oneOf(all_cols, caseless =  True)
-    positions = oneOf(positions, caseless = True)
+    all_player_teams = oneOf(all_player_teams, caseless=True)
+    all_tables = oneOf(all_tables, caseless=True)
+    all_cols = oneOf(all_cols, caseless=True)
+    positions = oneOf(positions, caseless=True)
     match_no = oneOf([str(match) for match in match_no])
 
     # define operators in grammar
@@ -90,11 +90,10 @@ def parse(user_input):
     comparison_operator = (greater_operator | less_operator | equals_operator)
 
     # create potential query expressions
-    loc_exp = ((match_keyword|game_keyword|venue_keyword) + in_operator + location)("game_loc_exp")
+    loc_exp = ((match_keyword | game_keyword | venue_keyword) + in_operator + location)("game_loc_exp")
     player_team_exp = (player_keyword + from_operator + all_player_teams)("player_team_exp")
     where_exp = (all_tables + where_operator + all_cols + comparison_operator + word)("where_exp")
-    play_exp = ((player_keyword|team_keyword) + play_keyword + (location|positions| match_no))("play_exp")
-    
+    play_exp = ((player_keyword | team_keyword) + play_keyword + (location | positions | match_no))("play_exp")
 
     # create and_expr
     # expressions_list = [res_exp, sum_exp, pt_exp, loc_exp, snow_exp, typ_exp, diff_exp]
@@ -116,8 +115,8 @@ def parse(user_input):
     except Exception as e:
         return 0
 
-res = parse('players play in GK')
-# main program to call parser function and firestorm function
+
+res = parse('players play in GK')  # main program to call parser function and firestorm function
 # def main():
 #     intro = '''Dear beloved user,
 #         I was built in order to help provide information on all ski resorts on the Ikon pass.
