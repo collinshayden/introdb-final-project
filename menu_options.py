@@ -1,6 +1,7 @@
 # functions called from nav
 
 from utils import *
+from parser import *
 
 
 def add(con):
@@ -172,3 +173,28 @@ def stats(con):
     elif selected_operation == "avg":
         mean = calculate_stats(con, selected_column, selected_table, selected_operation)
         print(f"The mean {selected_column} is {mean:.2f}")
+
+
+def query_help():
+    print("This program allows you to make various queries to our database which contains information about soccer "
+          "games. Some example queries are listed below: ")
+    print("1. games won by [team_name]\n"
+          "2. players play in [city]\n"
+          "3. position of [player_name]\n"
+          "4. total [audience] of [team_name]\n"
+          "5. win percentage of [team_name]\n"
+          "6. players from [team_name]\n"
+          "7. players in [team_name]\n"
+          "8. players with age < 20\n")
+
+
+def query(con):
+    cursor = con.cursor()
+    query_help()
+    query_statement = get_query()
+    res = cursor.execute(query_statement)
+    for row in res.fetchall():
+        print(row)
+
+def visualizations(con):
+    pass

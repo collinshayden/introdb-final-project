@@ -125,12 +125,14 @@ def process_res_query(query):
         res = "L"
     teams = execute_query("SELECT team_name FROM team")
     players = execute_query("SELECT player_name FROM player")
+    # TODO United States doesn't work, it gets parsed as 'United'
     if subject in teams:
         return f'''SELECT matches.* FROM team JOIN matches ON team.team_id = matches.team1_id 
         OR team.team_id = matches.team2_id WHERE team.team_name = "{subject}"
         AND (matches.team1_id = team.team_id AND matches.team1_result = '{res}'
         OR matches.team2_id = team.team_id AND matches.team2_result = '{res}')'''
     else:
+        # TODO player names only get parsed as first names
         return f''' SELECT matches.* FROM player JOIN matches ON player.team_id = matches.team1_id 
         OR player.team_id = matches.team2_id WHERE player.player_name = "{subject}"
         AND (matches.team1_id = player.team_id AND matches.team1_result = '{res}'
@@ -220,7 +222,7 @@ def process_play_query(query):
 
 def process_position_query(query):
     name = query[2]
-    return f'''SELECT * from player where player_name = "{name}" '''
+    return f'''SELECT posi_to_play from player where player_name = "{name}" '''
 
 
 def process_total_query(query):
@@ -375,7 +377,7 @@ def parse(user_input):
     wp_exp = (wp_keyword + of_operator + (all_player_teams | player_names))("wp_exp")
     position_exp = (position_keyword + of_operator + player_names)("position_exp")
     total_exp = (total_keyword + total_cols + of_operator + (
-                location | player_names | match_no | positions | all_player_teams))("total_exp")
+            location | player_names | match_no | positions | all_player_teams))("total_exp")
     res_exp = ((match_keyword) + results + (all_player_teams | player_names))
     expression = Forward()
 
@@ -410,8 +412,9 @@ def compare_input_length(parsed_input, user_input):
     return parsed_input
 
 
-def main():
-    user_input = input("Please enter your query as described by the structure above: ")
+def get_query():
+    print("Please enter your query as described by the structure above: ")
+    user_input = input(" => ")
     parsed_input = validate_input(user_input)
     parsed_input = compare_input_length(parsed_input, user_input)
     if parsed_input[1] == 'won by' or parsed_input[1] == 'lost by' or parsed_input[1] == 'tied by':
@@ -424,10 +427,8 @@ def main():
         query_info = process_total_query(parsed_input)
     elif parsed_input[0] == 'win percentage':
         query_info = process_wp_query(parsed_input)
-    elif parsed_input[0] == "total":
-        query_info = process_total_query(parsed_input)
     # used for player origin queries
-    elif (parsed_input[1] == 'from'):
+    elif parsed_input[1] == 'from':
         query_info = process_player_query(parsed_input)
     # used for location queries
     elif parsed_input[1] == 'in':
@@ -436,8 +437,10 @@ def main():
     elif parsed_input[1] == 'with':
         query_info = process_with_query(parsed_input)
         while query_info == '':
-            user_input = input(
-                "That is not a valid query for that information. Make sure you are using the correct operators. For queries about text columns be sure to use the == operator. Please enter another query: ")
+            print("That is not a valid query for that information. Make sure you are using the correct operators. For "
+                  "queries about text columns be sure to use the == operator. Please enter another query: ")
+            user_input = input(" => ")
+
             parsed_input = validate_input(user_input)
             parsed_input = compare_input_length(parsed_input, user_input)
             query_info = process_with_query(parsed_input)
@@ -446,5 +449,7 @@ def main():
         query_info = user_input
     print(query_info)
 
+    return query_info
 
-main()
+
+get_query()
