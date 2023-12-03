@@ -1,21 +1,20 @@
 from pyparsing import *
 import sqlite3
 
-#connect to sqlite
+# connect to sqlite
 con = sqlite3.connect('soccer.db')
 
-#create the cursor 
-cur = con.cursor() 
-tables = ['matches', 'player','city','team','venue']
-replacement_dictionary = {'goals for': 'goal_for', 'goals against':'goal_agnst',
-                          'points':'pts','position':'posi_to_play', 'group':'team_group' , 
-                          'goal differential': 'goal_diff', 'group position':'group_position',
-                          'venue' : 'venue_name' , 'city': 'city_name', 'name': 'name', 
-                          'players': 'player', 'teams':'team','match': 'matches',
-                          'games': 'matches', 'game' : 'matches', 'venues': 'venue',
-                          'cities': 'city', 'match id': 'match_id', 'venue id': 'venue_id', 
-                          'match number': 'match_id'
-                          }
+# create the cursor
+cur = con.cursor()
+tables = ['matches', 'player', 'city', 'team', 'venue']
+replacement_dictionary = {'goals for': 'goal_for', 'goals against': 'goal_agnst', 'points': 'pts',
+                          'position': 'posi_to_play', 'group': 'team_group', 'goal differential': 'goal_diff',
+                          'group position': 'group_position', 'venue': 'venue_name', 'city': 'city_name',
+                          'name': 'name', 'players': 'player', 'teams': 'team', 'match': 'matches', 'games': 'matches',
+                          'game': 'matches', 'venues': 'venue', 'cities': 'city', 'match id': 'match_id',
+                          'venue id': 'venue_id', 'match number': 'match_id'}
+
+
 def execute_query(query):
     result_list = []
     cur.execute(query)
@@ -24,74 +23,78 @@ def execute_query(query):
         result_list.append(item[0])
     return result_list
 
-#retrieveed the column names from a table and adds them to a list
+
+# retrieveed the column names from a table and adds them to a list
 def retrieve_cols(table_name):
     name_list = []
     cols = cur.execute(f'PRAGMA table_info({table_name})')
-    cols= cur.fetchall()
-    for index in range(0,len(cols)):
-        #pull the column names
+    cols = cur.fetchall()
+    for index in range(0, len(cols)):
+        # pull the column names
         col_name = cols[index][1]
-        #add the column names to the list
+        # add the column names to the list
         name_list.append(col_name)
     return name_list
 
-#gets the type of every column in all tables and puts it in a dictionary
+
+# gets the type of every column in all tables and puts it in a dictionary
 def get_col_type(table_names):
     col_type_dicts = {}
     for name in table_names:
-        #get the type of each column and name
+        # get the type of each column and name
         cols = cur.execute(f'PRAGMA table_info({name})')
-        cols= cur.fetchall()
+        cols = cur.fetchall()
         col_dicts = []
         for index in range(0, len(cols)):
-            #get the column name and append it the dictionary
+            # get the column name and append it the dictionary
             col_name = cols[index][1]
             col_dicts.append({col_name: cols[index][2]})
         col_type_dicts[name] = col_dicts
     return col_type_dicts
 
+
 def process_with_query(query):
-    #get the query information
+    # get the query information
     query_sub_table = query[0]
     operator = query[3]
     query_column = query[2]
     query_value = query[4]
-    #see if the query is a name with two words and concatenate the first and last name
+    # see if the query is a name with two words and concatenate the first and last name
     if len(query) > 5 and query_column == "name":
         query_value = query[4] + ' ' + query[5]
-    
-    
-    #see if the query column is in the replacement dictionary and select the correct name variable based on table name
+
+    # see if the query column is in the replacement dictionary and select the correct name variable based on table name
     if query_column in replacement_dictionary:
         query_column = replacement_dictionary[query_column]
-        if query_column == "name": 
+        if query_column == "name":
             query_column = query_sub_table + "_name"
-    #determine if the subject of the query is in the replacement dictionary (NO TABLES)
+    # determine if the subject of the query is in the replacement dictionary (NO TABLES)
     if query_sub_table in replacement_dictionary and query_sub_table not in tables:
         query_sub_table = replacement_dictionary[query_sub_table]
     query_field_table, typ = get_query_type(query_column)
-    #validate the type - we dont wnat > < for validating strings 
-    if (operator == "<"  or operator == ">") and (typ != "INTEGER"):
+    # validate the type - we dont wnat > < for validating strings
+    if (operator == "<" or operator == ">") and (typ != "INTEGER"):
         return ''
     else:
-        #if the comparison operator is appropriate for the type of the field return the query info in a list
-        #SQL - SELECT * from query_sub_table join query_field_table where query_column query_operator query_value
+        # if the comparison operator is appropriate for the type of the field return the query info in a list
+        # SQL - SELECT * from query_sub_table join query_field_table where query_column query_operator query_value
         return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} {query_value}'''
 
-#function that gets the table and type of a query column
+
+# function that gets the table and type of a query column
 def get_query_type(query_column):
-    #get the column type for every column in every table
+    # get the column type for every column in every table
     cols = get_col_type(tables)
-    #find which table and type the field beign queried is 
+    # find which table and type the field beign queried is
     for table, table_cols in cols.items():
         for column_dict in table_cols:
             if query_column == list(column_dict.keys())[0]:
-                #get the type and table the query field is in
+                # get the type and table the query field is in
                 typ = column_dict[query_column]
                 query_table = table
     return [query_table, typ]
-                      
+
+
 def process_wp_query(query):
     players = execute_query("SELECT DISTINCT player_name from player")
     name = query[2]
@@ -102,18 +105,18 @@ def process_wp_query(query):
         ELSE 0 END) / COUNT(*) * 100) as win_percentage FROM player JOIN matches 
         ON player.team_id = matches.team1_id OR player.team_id = matches.team2_id
         WHERE player.player_name = "{name}" GROUP BY player.player_name '''
-    else: 
+    else:
         return f'''SELECT *, (SUM (CASE 
         WHEN matches.team1_id = team.team_id  and matches.team1_result = "W" THEN 1.0
         WHEN matches.team2_id = team.team_id and matches.team2_result = "W" THEN 1.0
         ELSE 0 END) / COUNT(*) * 100) as win_percentage FROM team JOIN matches 
         ON team.team_id = matches.team1_id OR team.team_id = matches.team2_id
         WHERE team.team_name = "{name}" GROUP BY team.team_name '''
-        
-        
+
+
 def process_res_query(query):
     subject = query[3]
-    res = query[2]   
+    res = query[2]
     if res == 'won by':
         res = "W"
     elif res == "tied by":
@@ -126,47 +129,45 @@ def process_res_query(query):
         return f'''SELECT matches.* FROM team JOIN matches ON team.team_id = matches.team1_id 
         OR team.team_id = matches.team2_id WHERE team.team_name = "{subject}"
         AND (matches.team1_id = team.team_id AND matches.team1_result = '{res}'
-        OR matches.team2_id = team.team_id AND matches.team2_result = '{res}')''' 
+        OR matches.team2_id = team.team_id AND matches.team2_result = '{res}')'''
     else:
         return f''' SELECT matches.* FROM player JOIN matches ON player.team_id = matches.team1_id 
         OR player.team_id = matches.team2_id WHERE player.player_name = "{subject}"
         AND (matches.team1_id = player.team_id AND matches.team1_result = '{res}'
         OR matches.team2_id = player.team_id AND matches.team2_result = '{res}')'''
 
-	
 
-     
 def process_location_query(query):
-    #get query info
+    # get query info
     query_sub = query[0]
     query_loc = query[2]
-    #determine if the subject needs to be replaced - ie if the user input is plural
+    # determine if the subject needs to be replaced - ie if the user input is plural
     if query_sub in replacement_dictionary and query_sub not in tables:
         query_sub = replacement_dictionary[query_sub]
-    #determine the table which the user is inquiring
+    # determine the table which the user is inquiring
     if query_sub == 'game' or query_sub == 'match':
         query_table = 'matches'
     else:
         query_table = 'venue'
-    #get the list of values in each table to determine what table itll be in 
+    # get the list of values in each table to determine what table itll be in
     venues = execute_query("SELECT venue_name from venue")
-    #detrmine which list the location is in 
+    # detrmine which list the location is in
     if query_loc in venues:
         join_table = 'venue'
         join_cond = 'venue_name'
     else:
-        join_table= 'city'
+        join_table = 'city'
         join_cond = 'city_name'
-    #SQL statment will be SELECT * FROM query_table join join_table where join_cond = query_loc
-    #UNDER THE ASSUMPTION OF A SINGLE JOIN 
-    return f'''SELECT DISTINCT {query_sub}_name FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" ''' 
-    
-    
+    # SQL statment will be SELECT * FROM query_table join join_table where join_cond = query_loc
+    # UNDER THE ASSUMPTION OF A SINGLE JOIN
+    return f'''SELECT DISTINCT {query_sub}_name FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" '''
+
+
 def process_player_query(query):
     player_name = query[0]
     player_team = query[2]
     sub_table = 'player'
-    #determine if the team is a club team or national team
+    # determine if the team is a club team or national team
     club_teams = execute_query("SELECT distinct playing_club from player")
     if player_team in club_teams:
         join_table = ''
@@ -174,50 +175,53 @@ def process_player_query(query):
     else:
         join_table = 'team'
         col = 'team_name'
-    #SQL: 
-    #SELECT * from player where col = __________
-    #SELECT * from player join team where col = _____________
+    # SQL:
+    # SELECT * from player where col = __________
+    # SELECT * from player join team where col = _____________
     return f'''SELECT * FROM player join {join_table} where {col} = "{player_team}" '''
 
+
 def process_play_query(query):
-    #pull info from query
-    query_sub =  query[0]
+    # pull info from query
+    query_sub = query[0]
     playing_pos = query[2]
     if query_sub in replacement_dictionary and query_sub not in tables:
         query_sub = replacement_dictionary[query_sub]
-    #get a list of potential positions and cities and venues
+    # get a list of potential positions and cities and venues
     cities = execute_query("SELECT distinct city_name from city")
     positions = execute_query("SELECT distinct posi_to_play from player")
     venues = execute_query("SELECT distinct city_name from city")
-    #create all possible options 
-    #if this is a match number 
+    # create all possible options
+    # if this is a match number
     if playing_pos.isdigit():
         if query_sub == 'player':
             return f'''SELECT player_name FROM player join matches on matches.team1_id = player.team_id or matches.team2_id = player.team_id where match_id = {playing_pos}'''
         if query_sub == 'team':
             return f'''SELECT * FROM team join matches on team.team_id = matches.team1_id or team.team_id = matches.team2_id where match_id = {playing_pos} '''
-    #option 1 - player plays in a position
-    #SELECT * FROM player where posi_to_play = playing_pos
+    # option 1 - player plays in a position
+    # SELECT * FROM player where posi_to_play = playing_pos
     if query_sub == 'player':
         if playing_pos in positions:
             return f'''SELECT * FROM player where posi_to_play = {playing_pos}'''
-        #option 2 - player plays in a venue
-        #select * from (player join match) join venue where venue_name = playing_pos
+        # option 2 - player plays in a venue
+        # select * from (player join match) join venue where venue_name = playing_pos
         if playing_pos in venues:
-           return f''' SELECT DISTINCT player_name FROM (player join matches) join venue where venue_name = "{playing_pos}"'''
-        #option 3 - a player plays in a city
-        #select * from ((player join match) join venue) join city where city_name = playing_pos
+            return f''' SELECT DISTINCT player_name FROM (player join matches) join venue where venue_name = "{playing_pos}"'''
+        # option 3 - a player plays in a city
+        # select * from ((player join match) join venue) join city where city_name = playing_pos
         if playing_pos in cities:
-            return f'''SELECT DISTINCT player_name from ((player join matches) join venue) join city where city_name = "{playing_pos}"''' 
+            return f'''SELECT DISTINCT player_name from ((player join matches) join venue) join city where city_name = "{playing_pos}"'''
     if query_sub == 'team':
         if playing_pos in venues:
             return f'''SELECT DISTINCT team_name from (team join matches) join venue where venue_name = "{playing_pos}"'''
         if playing_pos in cities:
-            return f'''SELECT DISTINCT team_name from ((team join matches) join venue) join city where city_name = "{playing_pos}"''' 
-        
+            return f'''SELECT DISTINCT team_name from ((team join matches) join venue) join city where city_name = "{playing_pos}"'''
+
+
 def process_position_query(query):
     name = query[2]
     return f'''SELECT * from player where player_name = "{name}" '''
+
 
 def process_total_query(query):
     teams = execute_query("SELECT team_name FROM team")
@@ -226,9 +230,9 @@ def process_total_query(query):
     cities = execute_query("SELECT city_name FROM city")
     match_nums = execute_query("SELECT match_id FROM matches")
     match_nums = [str(match) for match in match_nums]
-    
+
     positions = execute_query("SELECT DISTINCT posi_to_play FROM player")
-    totaled = query[1] 
+    totaled = query[1]
     subject = query[3]
     if totaled in replacement_dictionary:
         totaled = replacement_dictionary[totaled]
@@ -238,11 +242,11 @@ def process_total_query(query):
         if subject in teams:
             return f'''SELECT sum(audience) FROM team join matches on matches.team1_id = team.team_id 
             or matches.team2_id = team.team_id where team_name = "{query[3]}" '''
-        elif subject in players: 
+        elif subject in players:
             return f'''SELECT sum(audience) FROM player join matches on matches.team1_id = player.team_id 
             or matches.team2_id = player.team_id where player_name = "{query[3]}" '''
         elif subject in venues:
-             return f'''SELECT sum(audience) FROM (team join matches on matches.team1_id = team.team_id 
+            return f'''SELECT sum(audience) FROM (team join matches on matches.team1_id = team.team_id 
              or matches.team2_id = team.team_id) join venue on venue.venue_id = matches.venue_id
             where venue_name = "{query[3]}"'''
         elif subject in cities:
@@ -251,24 +255,24 @@ def process_total_query(query):
             join city on city.city_id = venue.city_id   where city_name = "{query[3]}"'''
         elif subject in match_nums:
             return f'''SELECT audience FROM matches where match_id = {query[3]}'''
-        else: 
+        else:
             return ''
-        
-    elif totaled == "goal_for" or totaled == "goal_agnst": 
+
+    elif totaled == "goal_for" or totaled == "goal_agnst":
         if subject in teams:
             return f'''SELECT {totaled} from team where team_name = "{subject}"'''
         if subject in players:
             return f'''SELECT  {totaled} from player join team on player.team_id = team.team_id 
             where player_name = "{subject}"'''
-            
-    elif totaled == 'player': 
+
+    elif totaled == 'player':
         if subject in teams:
             return f'''SELECT COUNT(player_name) AS player_count FROM player JOIN team 
             ON player.team_id = team.team_id WHERE team.team_name = "{subject}"
             GROUP BY team.team_name'''
         elif subject in positions:
             return f'''SELECT COUNT(player_name) AS player_count FROM player 
-            WHERE posi_to_play = "{subject}" GROUP BY posi_to_play''' 
+            WHERE posi_to_play = "{subject}" GROUP BY posi_to_play'''
         else:
             return ''
     elif totaled == 'matches':
@@ -280,7 +284,7 @@ def process_total_query(query):
             matches.team1_id = player.team_id or matches.team2_id = player.team_id 
             where player_name = "{subject}"'''
         else:
-            return '' 
+            return ''
     elif totaled == 'wins' or totaled == 'losses' or totaled == 'draws':
         if subject in teams:
             return f'''SELECT SUM(wins) AS win_count FROM team WHERE 
@@ -289,27 +293,24 @@ def process_total_query(query):
             return f'''SELECT sum(wins) FROM team join player on team.team_id = player.team_id
             WHERE player_name = "{subject}" GROUP BY player_name'''
         else:
-            return '' 
+            return ''
     else:
         return ''
-        
-        
-        
 
 
 def parse(user_input):
-    total_cols = ['goals for', 'goals against', 'audience','points','players','matches','wins', 'draws', 'losses'] 
-    
+    total_cols = ['goals for', 'goals against', 'audience', 'points', 'players', 'matches', 'wins', 'draws', 'losses']
+
     col_names_readable = list(replacement_dictionary.keys())
-    #this pulls the column names with some extra non-useful data 
+    # this pulls the column names with some extra non-useful data
     match_cols = retrieve_cols('matches')
     player_cols = retrieve_cols('player')
     team_cols = retrieve_cols('team')
     venue_cols = retrieve_cols('venue')
     city_cols = retrieve_cols('city')
     all_cols = match_cols + player_cols + team_cols + venue_cols + city_cols + col_names_readable
-    
-    #create a list of possible locations for the cities or venues 
+
+    # create a list of possible locations for the cities or venues
     cities = execute_query("SELECT city_name FROM city")
     venues = execute_query("SELECT venue_name FROM venue")
     players_names = execute_query("SELECT player_name FROM player")
@@ -318,7 +319,7 @@ def parse(user_input):
     all_player_teams = player_clubs + player_countries
     locations = cities + venues
     results = ['won by', 'lost by', 'tied by']
-    plural_table_names = ['teams', 'players', 'match', 'venues', 'cities' ]
+    plural_table_names = ['teams', 'players', 'match', 'venues', 'cities']
     positions = execute_query("SELECT posi_to_play FROM player")
     match_no = execute_query("SELECT match_id FROM matches")
 
@@ -334,28 +335,26 @@ def parse(user_input):
     position_keyword = CaselessLiteral("position")
     word = Word(alphas)
     ints = Word(nums)
-    
-    
 
     # define parser variables
-    player_keyword = oneOf(['player','players'], caseless = True)
-    match_keyword = oneOf(['match','matches','game','games'], caseless = True)
-    team_keyword = oneOf(['team','teams'], caseless = True)
-    results = oneOf(results, caseless = True)
-    player_names = oneOf(players_names, caseless = True)
-    match_col = oneOf(match_cols, caseless = True)
-    player_col = oneOf(player_cols, caseless = True)
-    team_col = oneOf(team_cols, caseless = True)
-    venue_col = oneOf(venue_cols, caseless = True)
-    city_col = oneOf(city_cols, caseless = True)
+    player_keyword = oneOf(['player', 'players'], caseless=True)
+    match_keyword = oneOf(['match', 'matches', 'game', 'games'], caseless=True)
+    team_keyword = oneOf(['team', 'teams'], caseless=True)
+    results = oneOf(results, caseless=True)
+    player_names = oneOf(players_names, caseless=True)
+    match_col = oneOf(match_cols, caseless=True)
+    player_col = oneOf(player_cols, caseless=True)
+    team_col = oneOf(team_cols, caseless=True)
+    venue_col = oneOf(venue_cols, caseless=True)
+    city_col = oneOf(city_cols, caseless=True)
     location = oneOf(locations, caseless=True)
-    all_player_teams = oneOf(all_player_teams, caseless = True)
-    all_tables = oneOf(tables, caseless = True)
-    all_cols = oneOf(all_cols, caseless =  True)
-    positions = oneOf(positions, caseless = True)
-    total_cols = oneOf(total_cols, caseless = True)
-    play_in = oneOf(['plays in', 'play in'], caseless = True)
-    plural_table_names = oneOf(plural_table_names, caseless = True)
+    all_player_teams = oneOf(all_player_teams, caseless=True)
+    all_tables = oneOf(tables, caseless=True)
+    all_cols = oneOf(all_cols, caseless=True)
+    positions = oneOf(positions, caseless=True)
+    total_cols = oneOf(total_cols, caseless=True)
+    play_in = oneOf(['plays in', 'play in'], caseless=True)
+    plural_table_names = oneOf(plural_table_names, caseless=True)
     match_no = oneOf([str(match) for match in match_no])
 
     # define operators in grammar
@@ -366,16 +365,18 @@ def parse(user_input):
     of_operator = CaselessLiteral("of")
     or_operator = CaselessLiteral("or")
     comparison_operator = (greater_operator | less_operator | equals_operator)
-    
+
     # create potential query expressions
-    loc_exp = ((match_keyword|venue_keyword) + in_operator + location)("loc_exp")
+    loc_exp = ((match_keyword | venue_keyword) + in_operator + location)("loc_exp")
     player_team_exp = (player_keyword + from_operator + all_player_teams)("player_team_exp")
-    with_exp = ((plural_table_names|all_tables) + with_operator + (all_cols) + comparison_operator + (word|ints))("with_exp") 
-    play_exp = ((player_keyword|team_keyword) + play_in + (location|positions| match_no))("play_exp")
-    wp_exp = (wp_keyword + of_operator + (all_player_teams|player_names))("wp_exp")
-    position_exp =  (position_keyword + of_operator + player_names)("position_exp")
-    total_exp = (total_keyword + total_cols + of_operator + (location|player_names|match_no|positions|all_player_teams))("total_exp")
-    res_exp = ((match_keyword) + results + (all_player_teams|player_names))
+    with_exp = ((plural_table_names | all_tables) + with_operator + (all_cols) + comparison_operator + (word | ints))(
+        "with_exp")
+    play_exp = ((player_keyword | team_keyword) + play_in + (location | positions | match_no))("play_exp")
+    wp_exp = (wp_keyword + of_operator + (all_player_teams | player_names))("wp_exp")
+    position_exp = (position_keyword + of_operator + player_names)("position_exp")
+    total_exp = (total_keyword + total_cols + of_operator + (
+                location | player_names | match_no | positions | all_player_teams))("total_exp")
+    res_exp = ((match_keyword) + results + (all_player_teams | player_names))
     expression = Forward()
 
     # expression definition (for grammar)
@@ -391,21 +392,24 @@ def parse(user_input):
     except Exception as e:
         return 0
 
-#validates the user input based on the response of the parser
+
+# validates the user input based on the response of the parser
 def validate_input(user_input):
     while parse(user_input) == 0:
         user_input = input("Invalid query. Please enter a query that matches the above instructions: ")
     return parse(user_input)
 
-#compares the user input length to the responsed of the parser b/c parser can sometimes crop the input
+
+# compares the user input length to the responsed of the parser b/c parser can sometimes crop the input
 def compare_input_length(parsed_input, user_input):
-    #difference in user input length and the parsed input length
+    # difference in user input length and the parsed input length
     input_length_difference = len(user_input.split(' ')) - len(parsed_input)
-    #grab the rest of the string that could have been missed by the parser
+    # grab the rest of the string that could have been missed by the parser
     if input_length_difference > 0:
-        parsed_input = parsed_input + user_input.split(' ')[-input_length_difference: ]
+        parsed_input = parsed_input + user_input.split(' ')[-input_length_difference:]
     return parsed_input
-    
+
+
 def main():
     user_input = input("Please enter your query as described by the structure above: ")
     parsed_input = validate_input(user_input)
@@ -418,27 +422,29 @@ def main():
         query_info = process_position_query(parsed_input)
     elif parsed_input[0] == "total":
         query_info = process_total_query(parsed_input)
-    elif parsed_input[0] == 'win percentage': 
+    elif parsed_input[0] == 'win percentage':
         query_info = process_wp_query(parsed_input)
     elif parsed_input[0] == "total":
         query_info = process_total_query(parsed_input)
-    #used for player origin queries
+    # used for player origin queries
     elif (parsed_input[1] == 'from'):
         query_info = process_player_query(parsed_input)
-    #used for location queries
+    # used for location queries
     elif parsed_input[1] == 'in':
         query_info = process_location_query(parsed_input)
-    #used for with statements 
-    elif parsed_input[1] == 'with': 
+    # used for with statements
+    elif parsed_input[1] == 'with':
         query_info = process_with_query(parsed_input)
         while query_info == '':
-            user_input = input("That is not a valid query for that information. Make sure you are using the correct operators. For queries about text columns be sure to use the == operator. Please enter another query: ")
+            user_input = input(
+                "That is not a valid query for that information. Make sure you are using the correct operators. For queries about text columns be sure to use the == operator. Please enter another query: ")
             parsed_input = validate_input(user_input)
             parsed_input = compare_input_length(parsed_input, user_input)
             query_info = process_with_query(parsed_input)
-            
-    else: 
+
+    else:
         query_info = user_input
     print(query_info)
+
+
 main()
-        
