@@ -75,10 +75,14 @@ def process_with_query(query):
     # validate the type - we dont want > < for validating strings
     if (operator == "<" or operator == ">") and (typ != "INTEGER"):
         return ''
+    # if the comparison operator is appropriate for the type of the field return the SQL statement
     else:
-        # if the comparison operator is appropriate for the type of the field return the query info in a list
-        # SQL - SELECT * from query_sub_table join query_field_table where query_column query_operator query_value
-        return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} {query_value}'''
+        # no need to have a join if these are the same
+        if query_field_table == query_sub_table:
+            return f'''SELECT * FROM {query_field_table} where {query_column} {operator} {query_value}'''
+        else:
+            # SQL - SELECT * from query_sub_table join query_field_table where query_column query_operator query_value
+            return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} {query_value}'''
 
 
 # function that gets the table and type of query column
@@ -145,7 +149,7 @@ def process_location_query(query):
     if query_sub in replacement_dictionary and query_sub not in tables:
         query_sub = replacement_dictionary[query_sub]
     # determine the table which the user is inquiring
-    if query_sub == 'game' or query_sub == 'match':
+    if query_sub == 'game' or query_sub == 'matches':
         query_table = 'matches'
     else:
         query_table = 'venue'
@@ -160,7 +164,10 @@ def process_location_query(query):
         join_cond = 'city_name'
     # SQL statement will be SELECT * FROM query_table join join_table where join_cond = query_loc
     # UNDER THE ASSUMPTION OF A SINGLE JOIN
-    return f'''SELECT DISTINCT {query_sub}_name FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" '''
+    if query_table == 'matches':
+        return f'''SELECT * FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" '''
+    else:
+        return f'''SELECT DISTINCT {query_sub}_name FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" '''
 
 
 def process_player_query(query):
@@ -448,5 +455,3 @@ def get_query():
     print(query_info)
 
     return query_info
-
-
