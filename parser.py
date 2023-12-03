@@ -115,7 +115,7 @@ def process_wp_query(query):
 
 
 def process_res_query(query):
-    subject = query[3]
+    subject = query[2]
     res = query[2]
     if res == 'won by':
         res = "W"
@@ -125,14 +125,12 @@ def process_res_query(query):
         res = "L"
     teams = execute_query("SELECT team_name FROM team")
     players = execute_query("SELECT player_name FROM player")
-    # TODO United States doesn't work, it gets parsed as 'United'
     if subject in teams:
         return f'''SELECT matches.* FROM team JOIN matches ON team.team_id = matches.team1_id 
         OR team.team_id = matches.team2_id WHERE team.team_name = "{subject}"
         AND (matches.team1_id = team.team_id AND matches.team1_result = '{res}'
         OR matches.team2_id = team.team_id AND matches.team2_result = '{res}')'''
     else:
-        # TODO player names only get parsed as first names
         return f''' SELECT matches.* FROM player JOIN matches ON player.team_id = matches.team1_id 
         OR player.team_id = matches.team2_id WHERE player.player_name = "{subject}"
         AND (matches.team1_id = player.team_id AND matches.team1_result = '{res}'
@@ -452,4 +450,3 @@ def get_query():
     return query_info
 
 
-get_query()
