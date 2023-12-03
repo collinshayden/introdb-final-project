@@ -24,7 +24,7 @@ def execute_query(query):
     return result_list
 
 
-# retrieveed the column names from a table and adds them to a list
+# retrieved the column names from a table and adds them to a list
 def retrieve_cols(table_name):
     name_list = []
     cols = cur.execute(f'PRAGMA table_info({table_name})')
@@ -72,7 +72,7 @@ def process_with_query(query):
     if query_sub_table in replacement_dictionary and query_sub_table not in tables:
         query_sub_table = replacement_dictionary[query_sub_table]
     query_field_table, typ = get_query_type(query_column)
-    # validate the type - we dont wnat > < for validating strings
+    # validate the type - we dont want > < for validating strings
     if (operator == "<" or operator == ">") and (typ != "INTEGER"):
         return ''
     else:
@@ -81,11 +81,11 @@ def process_with_query(query):
         return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} {query_value}'''
 
 
-# function that gets the table and type of a query column
+# function that gets the table and type of query column
 def get_query_type(query_column):
     # get the column type for every column in every table
     cols = get_col_type(tables)
-    # find which table and type the field beign queried is
+    # find which table and type the field being queried is
     for table, table_cols in cols.items():
         for column_dict in table_cols:
             if query_column == list(column_dict.keys())[0]:
@@ -149,16 +149,16 @@ def process_location_query(query):
         query_table = 'matches'
     else:
         query_table = 'venue'
-    # get the list of values in each table to determine what table itll be in
+    # get the list of values in each table to determine what table it'll be in
     venues = execute_query("SELECT venue_name from venue")
-    # detrmine which list the location is in
+    # determine which list the location is in
     if query_loc in venues:
         join_table = 'venue'
         join_cond = 'venue_name'
     else:
         join_table = 'city'
         join_cond = 'city_name'
-    # SQL statment will be SELECT * FROM query_table join join_table where join_cond = query_loc
+    # SQL statement will be SELECT * FROM query_table join join_table where join_cond = query_loc
     # UNDER THE ASSUMPTION OF A SINGLE JOIN
     return f'''SELECT DISTINCT {query_sub}_name FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" '''
 
@@ -400,7 +400,7 @@ def validate_input(user_input):
     return parse(user_input)
 
 
-# compares the user input length to the responsed of the parser b/c parser can sometimes crop the input
+# compares the user input length to the response of the parser b/c parser can sometimes crop the input
 def compare_input_length(parsed_input, user_input):
     # difference in user input length and the parsed input length
     input_length_difference = len(user_input.split(' ')) - len(parsed_input)
