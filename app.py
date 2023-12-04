@@ -4,7 +4,7 @@
 
 import sqlite3
 from menu_options import *
-import parser
+import query_parser
 
 con = sqlite3.connect("soccer.db")
 

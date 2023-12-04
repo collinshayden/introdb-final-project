@@ -82,7 +82,7 @@ def process_with_query(query):
             return f'''SELECT * FROM {query_field_table} where {query_column} {operator} "{query_value}"'''
         else:
             # SQL - SELECT * from query_sub_table join query_field_table where query_column query_operator query_value
-            return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} {query_value}'''
+            return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} "{query_value}"'''
 
 
 # function that gets the table and type of query column

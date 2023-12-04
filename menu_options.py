@@ -1,7 +1,8 @@
 # functions called from nav
 
 from utils import *
-from parser import *
+from query_parser import *
+from query_parser import get_query
 
 
 def add(con):
