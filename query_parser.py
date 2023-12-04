@@ -197,7 +197,7 @@ def process_play_query(query):
     # get a list of potential positions and cities and venues
     cities = execute_query("SELECT distinct city_name from city")
     positions = execute_query("SELECT distinct posi_to_play from player")
-    venues = execute_query("SELECT distinct city_name from city")
+    venues = execute_query("SELECT distinct venue_name from venue")
     # create all possible options
     # if this is a match number
     if playing_pos.isdigit():
