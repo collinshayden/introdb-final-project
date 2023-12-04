@@ -179,13 +179,14 @@ def query_help():
     print("This program allows you to make various queries to our database which contains information about soccer "
           "games. Some example queries are listed below: ")
     print("1. games won by [team_name]\n"
-          "2. players play in [city]\n"
           "3. position of [player_name]\n"
-          "4. total [audience] of [team_name]\n"
+          "4. total [audience/goals for/matches/wins/losses/players] of [team_name]\n"
           "5. win percentage of [team_name]\n"
           "6. players from [team_name]\n"
-          "7. players in [team_name]\n"
-          "8. players with age < 20\n")
+          "7. players with age < 20\n"
+          "8. venues in [city]\n"
+          "9. matches in [city/venue]\n"
+          )
 
 
 def query(con):
@@ -193,8 +194,12 @@ def query(con):
     query_help()
     query_statement = get_query()
     res = cursor.execute(query_statement)
+    print("\nBelow is the result of your query! ")
     for row in res.fetchall():
         print(row)
+
+    query(con)
+
 
 def visualizations(con):
     pass
