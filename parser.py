@@ -79,7 +79,7 @@ def process_with_query(query):
     else:
         # no need to have a join if these are the same
         if query_field_table == query_sub_table:
-            return f'''SELECT * FROM {query_field_table} where {query_column} {operator} {query_value}'''
+            return f'''SELECT * FROM {query_field_table} where {query_column} {operator} "{query_value}"'''
         else:
             # SQL - SELECT * from query_sub_table join query_field_table where query_column query_operator query_value
             return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} {query_value}'''
@@ -120,7 +120,7 @@ def process_wp_query(query):
 
 def process_res_query(query):
     subject = query[2]
-    res = query[2]
+    res = query[1]
     if res == 'won by':
         res = "W"
     elif res == "tied by":
@@ -452,6 +452,4 @@ def get_query():
 
     else:
         query_info = user_input
-    print(query_info)
-
     return query_info
