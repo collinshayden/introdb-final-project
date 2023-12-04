@@ -179,14 +179,21 @@ def stats(con):
 def query_help():
     print("This program allows you to make various queries to our database which contains information about soccer "
           "games. Some example queries are listed below: ")
-    print("1. games won by [team_name]\n"
-          "3. position of [player_name]\n"
-          "4. total [audience/goals for/matches/wins/losses/players] of [team_name]\n"
+    print("1. games won by [player_name/team_name]\n"
+          "2. position of [player_name]\n"
+          "3. total players of [team_name]\n"
+          "4. total [audience/goals for/matches/wins/losses] of [player_name/team_name]\n"
           "5. win percentage of [team_name]\n"
           "6. players from [team_name]\n"
           "7. players with age < 20\n"
-          "8. venues in [city]\n"
-          "9. matches in [city/venue]\n")
+          "8. players with position = [position]\n"
+          "9. players play in [position]\n"
+          "10. teams with [wins/losses] > [n]\n"
+          "11. players with [wins/losses] > [n]\n"
+          "12. [players/teams] play in [city]\n"
+          "13. [players/teams] play in [venue]\n"
+          "14. venues in [city]\n"
+          "15. matches in [city/venue]\n")
 
 
 def query(con):
