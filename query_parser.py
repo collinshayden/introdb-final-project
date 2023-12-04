@@ -202,14 +202,14 @@ def process_play_query(query):
     # if this is a match number
     if playing_pos.isdigit():
         if query_sub == 'player':
-            return f'''SELECT player_name FROM player join matches on matches.team1_id = player.team_id or matches.team2_id = player.team_id where match_id = {playing_pos}'''
+            return f'''SELECT player_name FROM player join matches on matches.team1_id = player.team_id or matches.team2_id = player.team_id where match_id = "{playing_pos}"'''
         if query_sub == 'team':
-            return f'''SELECT * FROM team join matches on team.team_id = matches.team1_id or team.team_id = matches.team2_id where match_id = {playing_pos} '''
+            return f'''SELECT * FROM team join matches on team.team_id = matches.team1_id or team.team_id = matches.team2_id where match_id = "{playing_pos}" '''
     # option 1 - player plays in a position
     # SELECT * FROM player where posi_to_play = playing_pos
     if query_sub == 'player':
         if playing_pos in positions:
-            return f'''SELECT * FROM player where posi_to_play = {playing_pos}'''
+            return f'''SELECT * FROM player where posi_to_play = "{playing_pos}"'''
         # option 2 - player plays in a venue
         # select * from (player join match) join venue where venue_name = playing_pos
         if playing_pos in venues:

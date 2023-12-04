@@ -186,8 +186,7 @@ def query_help():
           "6. players from [team_name]\n"
           "7. players with age < 20\n"
           "8. venues in [city]\n"
-          "9. matches in [city/venue]\n"
-          )
+          "9. matches in [city/venue]\n")
 
 
 def query(con):
