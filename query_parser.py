@@ -7,12 +7,12 @@ con = sqlite3.connect('soccer.db')
 # create the cursor
 cur = con.cursor()
 tables = ['matches', 'player', 'city', 'team', 'venue']
-replacement_dictionary = {'goals for': 'goal_for', 'goals against': 'goal_agnst', 'points': 'pts',
+replacement_dictionary = {'goals for': 'goal_for', 'goals against': 'goal_agnst',
                           'position': 'posi_to_play', 'group': 'team_group', 'goal differential': 'goal_diff',
                           'group position': 'group_position', 'venue': 'venue_name', 'city': 'city_name',
                           'name': 'name', 'players': 'player', 'teams': 'team', 'match': 'matches', 'games': 'matches',
                           'game': 'matches', 'venues': 'venue', 'cities': 'city', 'match id': 'match_id',
-                          'venue id': 'venue_id', 'match number': 'match_id'}
+                          'venue id': 'venue_id', 'match number': 'match_id', 'team group' : 'team_group'}
 
 
 def execute_query(query):
@@ -165,9 +165,9 @@ def process_location_query(query):
     # SQL statement will be SELECT * FROM query_table join join_table where join_cond = query_loc
     # UNDER THE ASSUMPTION OF A SINGLE JOIN
     if query_table == 'matches':
-        return f'''SELECT * FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" '''
+        return f'''select DISTINCT * from  (venue join matches on matches.venue_id = venue.venue_id ) join city on venue.city_id = city.city_id where city_name = "{query_loc}" '''
     else:
-        return f'''SELECT DISTINCT {query_sub}_name FROM {query_table} join {join_table} where {join_cond} = "{query_loc}" '''
+        return f'''SELECT DISTINCT venue_name FROM venue join city on venue.city_id=city.city_id where city.city_name="{query_loc}"; '''
 
 
 def process_player_query(query):
@@ -294,10 +294,10 @@ def process_total_query(query):
             return ''
     elif totaled == 'wins' or totaled == 'losses' or totaled == 'draws':
         if subject in teams:
-            return f'''SELECT SUM(wins) AS win_count FROM team WHERE 
+            return f'''SELECT SUM({totaled}) AS win_count FROM team WHERE 
             team_name = "{subject}" GROUP BY team_name'''
         elif subject in players:
-            return f'''SELECT sum(wins) FROM team join player on team.team_id = player.team_id
+            return f'''SELECT sum({totaled}) FROM team join player on team.team_id = player.team_id
             WHERE player_name = "{subject}" GROUP BY player_name'''
         else:
             return ''

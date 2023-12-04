@@ -193,7 +193,10 @@ def query_help():
           "12. [players/teams] play in [city]\n"
           "13. [players/teams] play in [venue]\n"
           "14. venues in [city]\n"
-          "15. matches in [city/venue]\n")
+          "15. matches in [city/venue]\n"
+          "16. players in [match_id]"
+          "17. teams with points > [n]")
+
 
 
 def query(con):
