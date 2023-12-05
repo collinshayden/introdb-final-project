@@ -7,12 +7,12 @@ con = sqlite3.connect('soccer.db')
 # create the cursor
 cur = con.cursor()
 tables = ['matches', 'player', 'city', 'team', 'venue']
-replacement_dictionary = {'goals for': 'goal_for', 'goals against': 'goal_agnst',
-                          'position': 'posi_to_play', 'group': 'team_group', 'goal differential': 'goal_diff',
-                          'group position': 'group_position', 'venue': 'venue_name', 'city': 'city_name',
-                          'name': 'name', 'players': 'player', 'teams': 'team', 'match': 'matches', 'games': 'matches',
-                          'game': 'matches', 'venues': 'venue', 'cities': 'city', 'match id': 'match_id',
-                          'venue id': 'venue_id', 'match number': 'match_id', 'team group' : 'team_group'}
+replacement_dictionary = {'goals for': 'goal_for', 'goals against': 'goal_agnst', 'position': 'posi_to_play',
+                          'group': 'team_group', 'goal differential': 'goal_diff', 'group position': 'group_position',
+                          'venue': 'venue_name', 'city': 'city_name', 'name': 'name', 'players': 'player',
+                          'teams': 'team', 'match': 'matches', 'games': 'matches', 'game': 'matches', 'venues': 'venue',
+                          'cities': 'city', 'match id': 'match_id', 'venue id': 'venue_id', 'match number': 'match_id',
+                          'team group': 'team_group'}
 
 
 def execute_query(query):
@@ -79,10 +79,10 @@ def process_with_query(query):
     else:
         # no need to have a join if these are the same
         if query_field_table == query_sub_table:
-            return f'''SELECT * FROM {query_field_table} where {query_column} {operator} "{query_value}"'''
+            return f'''SELECT "{query_field_table}_name" FROM {query_field_table} where {query_column} {operator} "{query_value}"'''
         else:
             # SQL - SELECT * from query_sub_table join query_field_table where query_column query_operator query_value
-            return f'''SELECT * FROM {query_sub_table} join {query_field_table} where {query_column} {operator} "{query_value}"'''
+            return f'''SELECT "{query_sub_table}_name" FROM {query_sub_table} join {query_field_table} where {query_column} {operator} "{query_value}"'''
 
 
 # function that gets the table and type of query column
@@ -103,14 +103,14 @@ def process_wp_query(query):
     players = execute_query("SELECT DISTINCT player_name from player")
     name = query[2]
     if name in players:
-        return f'''SELECT *, (SUM (CASE 
+        return f'''SELECT (SUM (CASE 
         WHEN matches.team1_id = player.team_id  and matches.team1_result = "W" THEN 1.0
         WHEN matches.team2_id = player.team_id and matches.team2_result = "W" THEN 1.0
         ELSE 0 END) / COUNT(*) * 100) as win_percentage FROM player JOIN matches 
         ON player.team_id = matches.team1_id OR player.team_id = matches.team2_id
         WHERE player.player_name = "{name}" GROUP BY player.player_name '''
     else:
-        return f'''SELECT *, (SUM (CASE 
+        return f'''SELECT (SUM (CASE 
         WHEN matches.team1_id = team.team_id  and matches.team1_result = "W" THEN 1.0
         WHEN matches.team2_id = team.team_id and matches.team2_result = "W" THEN 1.0
         ELSE 0 END) / COUNT(*) * 100) as win_percentage FROM team JOIN matches 
@@ -153,20 +153,12 @@ def process_location_query(query):
         query_table = 'matches'
     else:
         query_table = 'venue'
-    # get the list of values in each table to determine what table it'll be in
-    venues = execute_query("SELECT venue_name from venue")
-    # determine which list the location is in
-    if query_loc in venues:
-        join_table = 'venue'
-        join_cond = 'venue_name'
-    else:
-        join_table = 'city'
-        join_cond = 'city_name'
+
     # SQL statement will be SELECT * FROM query_table join join_table where join_cond = query_loc
-    # UNDER THE ASSUMPTION OF A SINGLE JOIN
     if query_table == 'matches':
-        return f'''select DISTINCT * from  (venue join matches on matches.venue_id = venue.venue_id ) join city on venue.city_id = city.city_id where city_name = "{query_loc}" '''
+        return f'''select DISTINCT * from (venue join matches on matches.venue_id = venue.venue_id ) join city on venue.city_id = city.city_id where city_name = "{query_loc}" '''
     else:
+        # venues
         return f'''SELECT DISTINCT venue_name FROM venue join city on venue.city_id=city.city_id where city.city_name="{query_loc}"; '''
 
 
@@ -185,7 +177,7 @@ def process_player_query(query):
     # SQL:
     # SELECT * from player where col = __________
     # SELECT * from player join team where col = _____________
-    return f'''SELECT * FROM player join {join_table} where {col} = "{player_team}" '''
+    return f'''SELECT player_name FROM player join {join_table} where {col} = "{player_team}" '''
 
 
 def process_play_query(query):

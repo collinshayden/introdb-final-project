@@ -50,8 +50,9 @@ def get_numeric_columns(con):
             col_name = column[1]
             col_type = column[2]
             # if column data type is numeric and not an id field
-            if ('INT' in col_type or 'REAL' in col_type or 'FLOAT' in col_type or 'NUM' in col_type) \
-                    and not col_name.endswith('_id'):
+            if (
+                    'INT' in col_type or 'REAL' in col_type or 'FLOAT' in col_type or 'NUM' in col_type) and not col_name.endswith(
+                '_id'):
                 numeric_columns[col_name] = table_name
 
     return numeric_columns
@@ -81,3 +82,21 @@ def print_table(con, table):
     rows = con.execute(f"SELECT * FROM {table}")
     for row in rows:
         print(row)
+
+
+def print_query(con, query):
+    result = con.execute(query)
+    print("\n\nBelow is the result of your query!")
+    print("----------------------------------------")
+    result = result.fetchall()
+    if len(result) == 0:
+        print("There were no results for your query.")
+    elif len(result) == 1:
+        print(result[0][0])
+    elif len(result[0]) == 1:
+        for row in result:
+            print(row[0])
+    else:
+        for row in result:
+            print(row)
+    print("----------------------------------------")

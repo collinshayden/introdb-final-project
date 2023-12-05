@@ -194,21 +194,14 @@ def query_help():
           "13. [players/teams] play in [venue]\n"
           "14. venues in [city]\n"
           "15. matches in [city/venue]\n"
-          "16. players in [match_id]"
-          "17. teams with points > [n]")
-
+          "16. players play in [match_id]\n"
+          "17. teams with points > [n]\n")
 
 
 def query(con):
-    cursor = con.cursor()
     query_help()
     query_statement = get_query()
-    res = cursor.execute(query_statement)
-    print("\nBelow is the result of your query! ")
-    for row in res.fetchall():
-        print(row)
-
-    query(con)
+    print_query(con, query_statement)
 
 
 def visualizations(con):
