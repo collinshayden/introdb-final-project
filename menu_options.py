@@ -205,4 +205,91 @@ def query(con):
 
 
 def visualizations(con):
-    pass
+        #prompt user
+    user_choice = input("Please select one of the following statistics to visualize.\n"
+           "a. All goals scored for/against every team\n"
+          "b. Number of total players in each position\n"
+          "c. Win percentage of each team\n"
+          "d. Audience of each game played by a team\n")
+    while user_choice not in ['a','b','c','d']:
+        user_choice = input("Invalid selection please select a letter a-e.")
+    #get a list of teams
+    teams = execute_query("SELECT team_name FROM team")
+    
+    if user_choice == 'a':
+        #get all of the teams goals for and against 
+        goals = cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
+        goals = cur.fetchall()
+        #pull the data and put it into lists for plotting
+        team_names = []
+        goals_for = []
+        goals_against = []
+        for team in goals:
+            team_names.append(team[0][:4])
+            goals_for.append(team[1])
+            goals_against.append(team[2])
+        x_axis = np.arange(0, len(team_names))
+        plt.bar(x_axis - 0.2, goals_for, 0.4, label = "Goals For" )
+        plt.bar(x_axis +0.2, goals_against, 0.4, label = "Goals Against" )
+        plt.xticks(x_axis, team_names) 
+        plt.xlabel("Team")
+        plt.ylabel("Number of Goals")
+        plt.title("Number of Goals Score For/Against Each Team")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+    if user_choice == 'b':
+        positions = cur.execute("SELECT posi_to_play, count(*) as position_count from player group by posi_to_play")
+        positions = cur.fetchall()
+        pos = []
+        nums = []
+        for position in positions:
+            pos.append(position[0])
+            nums.append(position[1])
+        x_axis = np.arange(0, len(positions))
+        plt.bar(x_axis, nums, 0.6)
+        plt.xticks(x_axis, pos)
+        plt.xlabel("Position")
+        plt.ylabel("Number of Players")
+        plt.title("Total Number of Players in Each Position")
+        plt.tight_layout()
+        plt.show()
+    if user_choice == 'c':
+        win_percentages = []
+        names = []
+        for team_name in teams:
+            wp = cur.execute(f'''SELECT (SUM (CASE 
+            WHEN matches.team1_id = team.team_id  and matches.team1_result = "W" THEN 1.0
+            WHEN matches.team2_id = team.team_id and matches.team2_result = "W" THEN 1.0
+            ELSE 0 END) / COUNT(*) * 100) as win_percentage FROM team JOIN matches 
+            ON team.team_id = matches.team1_id OR team.team_id = matches.team2_id
+            WHERE team.team_name = "{team_name}" GROUP BY team.team_name''')
+            wp = cur.fetchall()
+            win_percentages.append(wp[0][0])
+            names.append(team_name[:3])
+        x_axis = np.arange(0, len(win_percentages))
+        plt.bar(x_axis, win_percentages, 0.8)
+        plt.xticks(x_axis, names)
+        plt.xlabel("Team")
+        plt.ylabel("Win Percentage")
+        plt.title("Win Percentage for Each Team")
+        plt.tight_layout()
+        plt.show()
+        
+    if user_choice == "d": 
+        total_aud = []
+        names = [] 
+        for team_name in teams:
+            aud = cur.execute(f'''SELECT sum(audience) FROM team join matches on matches.team1_id = team.team_id 
+            or matches.team2_id = team.team_id where team_name = "{team_name}" ''')
+            names.append(team_name[:3])
+            aud = cur.fetchall()
+            total_aud.append(aud[0][0])
+        x_axis = np.arange(0, len(total_aud))
+        plt.bar(x_axis, total_aud, 0.8)
+        plt.xticks(x_axis, names)
+        plt.xlabel("Team")
+        plt.ylabel("Total Audience")
+        plt.title("Total Audience of Each Team")
+        plt.tight_layout()
+        plt.show()
