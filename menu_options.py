@@ -3,6 +3,7 @@
 from utils import *
 from query_parser import *
 from query_parser import get_query
+import matplotlib.pyplot as plt
 
 
 def add(con):
@@ -204,23 +205,22 @@ def query(con):
     print_query(con, query_statement)
 
 
-def visualizations(con):
-        #prompt user
+def visualizations():
+    # prompt user
     user_choice = input("Please select one of the following statistics to visualize.\n"
-           "a. All goals scored for/against every team\n"
-          "b. Number of total players in each position\n"
-          "c. Win percentage of each team\n"
-          "d. Audience of each game played by a team\n")
-    while user_choice not in ['a','b','c','d']:
-        user_choice = input("Invalid selection please select a letter a-e.")
-    #get a list of teams
+                        "a. All goals scored for/against every team\n"
+                        "b. Number of total players in each position\n"
+                        "c. Win percentage of each team\n"
+                        "d. Audience of each game played by a team\n")
+    while user_choice not in ['a', 'b', 'c', 'd']:
+        user_choice = input("Invalid selection please select a letter a-e.")  # get a list of teams
     teams = execute_query("SELECT team_name FROM team")
-    
+
     if user_choice == 'a':
-        #get all of the teams goals for and against 
-        goals = cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
+        # get all the teams goals for and against
+        cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
         goals = cur.fetchall()
-        #pull the data and put it into lists for plotting
+        # pull the data and put it into lists for plotting
         team_names = []
         goals_for = []
         goals_against = []
@@ -229,17 +229,16 @@ def visualizations(con):
             goals_for.append(team[1])
             goals_against.append(team[2])
         x_axis = np.arange(0, len(team_names))
-        plt.bar(x_axis - 0.2, goals_for, 0.4, label = "Goals For" )
-        plt.bar(x_axis +0.2, goals_against, 0.4, label = "Goals Against" )
-        plt.xticks(x_axis, team_names) 
+        plt.bar(x_axis - 0.2, goals_for, 0.4, label="Goals For")
+        plt.bar(x_axis + 0.2, goals_against, 0.4, label="Goals Against")
+        plt.xticks(x_axis, team_names)
         plt.xlabel("Team")
         plt.ylabel("Number of Goals")
         plt.title("Number of Goals Score For/Against Each Team")
         plt.legend()
-        plt.tight_layout()
-        plt.show()
-    if user_choice == 'b':
-        positions = cur.execute("SELECT posi_to_play, count(*) as position_count from player group by posi_to_play")
+
+    elif user_choice == 'b':
+        cur.execute("SELECT posi_to_play, count(*) as position_count from player group by posi_to_play")
         positions = cur.fetchall()
         pos = []
         nums = []
@@ -252,9 +251,8 @@ def visualizations(con):
         plt.xlabel("Position")
         plt.ylabel("Number of Players")
         plt.title("Total Number of Players in Each Position")
-        plt.tight_layout()
-        plt.show()
-    if user_choice == 'c':
+
+    elif user_choice == 'c':
         win_percentages = []
         names = []
         for team_name in teams:
@@ -273,12 +271,10 @@ def visualizations(con):
         plt.xlabel("Team")
         plt.ylabel("Win Percentage")
         plt.title("Win Percentage for Each Team")
-        plt.tight_layout()
-        plt.show()
-        
-    if user_choice == "d": 
+
+    elif user_choice == "d":
         total_aud = []
-        names = [] 
+        names = []
         for team_name in teams:
             aud = cur.execute(f'''SELECT sum(audience) FROM team join matches on matches.team1_id = team.team_id 
             or matches.team2_id = team.team_id where team_name = "{team_name}" ''')
@@ -291,5 +287,5 @@ def visualizations(con):
         plt.xlabel("Team")
         plt.ylabel("Total Audience")
         plt.title("Total Audience of Each Team")
-        plt.tight_layout()
-        plt.show()
+    plt.tight_layout()
+    plt.show(block=False)

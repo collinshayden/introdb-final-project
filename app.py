@@ -12,7 +12,7 @@ con = sqlite3.connect("soccer.db")
 def nav():
     print(f"\nWelcome!")
     option = ""
-    while option not in ["a", "b", "c", "d", "e"]:
+    while option not in ["a", "b", "c", "d", "e", "f", "h"]:
         print("Choose an option: ")
         print(" (a) Add")
         print(" (b) Remove")
@@ -36,7 +36,7 @@ def nav():
     elif option == "e":
         query(con)
     elif option == "f":
-        visualizations(con)
+        visualizations()
     else:
         print("Quitting program.")
         return
