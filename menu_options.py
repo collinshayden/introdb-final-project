@@ -1,28 +1,30 @@
 # functions called from nav
 
-from utils import *
+import numpy as np
+from matplotlib import pyplot as plt
+
 from query_parser import *
 from query_parser import get_query
-from matplotlib import pyplot as plt
-import numpy as np
+from utils import *
+
 
 # function to add a row to a user selected table
 def add(con):
     selected_table, table_names = select_table(con)
-     # user input for which table to add to
+    # user input for which table to add to
     print(f"You selected to add to '{selected_table}'")
     if selected_table == "city":
         city_id = input("Enter the city id: ")
         city_name = input("Enter the city name: ")
-        con.execute("INSERT INTO city ('city_id', 'city_name') VALUES (?, ?)", (city_id, city_name))    
-    # inserting into table
+        con.execute("INSERT INTO city ('city_id', 'city_name') VALUES (?, ?)", (city_id, city_name))
+        # inserting into table
     elif selected_table == "venue":
         venue_id = input("Enter the venue id: ")
         venue_name = input("Enter the venue name: ")
         city_id = input("Enter the city id: ")
         con.execute("INSERT INTO venue ('venue_id', 'venue_name', 'city_id') VALUES (?, ?, ?)",
                     (venue_id, venue_name, city_id))
-    
+
     elif selected_table == "team":
         team_id = input("Enter the team_id: ")
         team_name = input("Enter the team name: ")
@@ -77,6 +79,7 @@ def add(con):
     print("Success! Below is the updated table.")
     print_table(con, selected_table)
 
+
 # function to remove a row from a table
 def remove(con):
     # user input to select table
@@ -90,7 +93,7 @@ def remove(con):
     else:
         primary_key = f'{selected_table}_id'
     id = input(f"Enter the {primary_key} of the row to be removed: ")
-    
+
     # removing from table
     con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
 
@@ -99,6 +102,7 @@ def remove(con):
     print("Success! Below is the updated table.")
     print_table(con, selected_table)
 
+
 # function to modify row in a table
 def modify(con):
     # user input to select table
@@ -106,7 +110,7 @@ def modify(con):
     print(f"You selected to modify a row from '{selected_table}'")
     print(f"\nThese are the current entries in the {selected_table} table: \n")
     print_table(con, selected_table)
-    
+
     if selected_table == "matches":
         primary_key = "match_id"
     else:
@@ -141,6 +145,7 @@ def modify(con):
     print("Success! Below is the updated table.")
     print_table(con, selected_table)
 
+
 # function to calculate stats function on a table
 def stats(con):
     operations = ["min", "max", "std", "median", "avg"]
@@ -165,8 +170,8 @@ def stats(con):
         selected_operation = input("Choose an operation to perform: ").lower()
         if selected_operation not in operations:
             print("Invalid selection.")
-            
-   # doing stats operations
+
+    # doing stats operations
     if selected_operation == "min":
         cursor = con.cursor()
         cursor.execute(f"SELECT MIN({selected_column}) FROM {selected_table}")
@@ -186,6 +191,7 @@ def stats(con):
     elif selected_operation == "avg":
         mean = calculate_stats(con, selected_column, selected_table, selected_operation)
         print(f"The mean {selected_column} is {mean:.2f}")
+
 
 # function to print a help message for the query function
 def query_help():
@@ -210,6 +216,7 @@ def query_help():
           "16. players play in [match_id]\n"
           "17. teams with points > [n]\n")
 
+
 # function to prompt user for a query and execute
 def query(con):
     query_help()
@@ -221,10 +228,12 @@ def query(con):
         query_statement = get_query()
         print_query(con, query_statement)
 
+
 # function to show all values in a table
 def show_table(con):
     table, table_names = select_table(con)
     print_table(con, table)
+
 
 # function to display plots from menu
 def visualizations(cur):
@@ -323,4 +332,3 @@ def visualizations(cur):
         plt.title("Teams grouped by # of wins")
     plt.tight_layout()
     plt.show(block=False)
-
