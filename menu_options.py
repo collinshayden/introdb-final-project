@@ -93,23 +93,15 @@ def remove(con):
     primary_key = f'{selected_table}_id'
     valid_key = False
     # getting user input to select and remove row
-    while not valid_key:
-        id = input(f"Enter the {primary_key} of the row to be deleted: ")
+    id = input(f"Enter the {primary_key} of the row to be deleted: ")
 
-        cursor = con.cursor()
-        con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
-        row = cursor.fetchone()  # Fetch a single row
-        if row:
-            print(row)
-            valid_key = True
-        else:
-            print("No matching row found, please try again")
+    con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
 
     # removing from table
 
     con.commit()
 
-    print("Success! Below is the updated table.")
+    print("Below is the updated table.")
     print_table(con, selected_table)
 
 
