@@ -1,6 +1,5 @@
-import sqlite3
-
 from pyparsing import *
+import sqlite3
 
 # connect to sqlite
 con = sqlite3.connect('soccer.db')
@@ -16,6 +15,7 @@ replacement_dictionary = {'goals for': 'goal_for', 'goals against': 'goal_agnst'
                           'team group': 'team_group'}
 
 
+#this executes an sql query and puts all results in a list
 def execute_query(query):
     result_list = []
     cur.execute(query)
@@ -54,7 +54,7 @@ def get_col_type(table_names):
     return col_type_dicts
 
 
-# function to process queries that include "with"
+#this processes with queries like "players with age > 20"
 def process_with_query(query):
     # get the query information
     query_sub_table = query[0]
@@ -101,7 +101,7 @@ def get_query_type(query_column):
     return [query_table, typ]
 
 
-# function to process queries that include "win percentage"
+#processes win percentage queries for a player or team - "win percentage of France
 def process_wp_query(query):
     players = execute_query("SELECT DISTINCT player_name from player")
     name = query[2]
@@ -120,8 +120,7 @@ def process_wp_query(query):
         ON team.team_id = matches.team1_id OR team.team_id = matches.team2_id
         WHERE team.team_name = "{name}" GROUP BY team.team_name '''
 
-
-# function to process queries that include "won by, tied by, lost by"
+#processes results query - "games lost by France"
 def process_res_query(query):
     subject = query[2]
     res = query[1]
@@ -144,8 +143,7 @@ def process_res_query(query):
         AND (matches.team1_id = player.team_id AND matches.team1_result = '{res}'
         OR matches.team2_id = player.team_id AND matches.team2_result = '{res}')'''
 
-
-# function to process queries that include "in"
+#processes location queries - "venues in france"
 def process_location_query(query):
     # get query info
     query_sub = query[0]
@@ -166,8 +164,7 @@ def process_location_query(query):
         # venues
         return f'''SELECT DISTINCT venue_name FROM venue join city on venue.city_id=city.city_id where city.city_name="{query_loc}"; '''
 
-
-# function to process queries that include "player"
+#processes player queries - "players from France"
 def process_player_query(query):
     player_name = query[0]
     player_team = query[2]
@@ -186,7 +183,7 @@ def process_player_query(query):
     return f'''SELECT player_name FROM player join {join_table} where {col} = "{player_team}" '''
 
 
-# function to process queries that include "play in"
+#processes play query - "players play in MF"
 def process_play_query(query):
     # pull info from query
     query_sub = query[0]
@@ -223,14 +220,12 @@ def process_play_query(query):
         if playing_pos in cities:
             return f'''SELECT DISTINCT team_name from ((team join matches) join venue) join city where city_name = "{playing_pos}"'''
 
-
-# function to process queries that include "position"
+#processes position of play  "position of John Doe"
 def process_position_query(query):
     name = query[2]
     return f'''SELECT posi_to_play from player where player_name = "{name}" '''
 
-
-# function to process queries that include "total"
+#processes totals - "total audience of France"
 def process_total_query(query):
     teams = execute_query("SELECT team_name FROM team")
     players = execute_query("SELECT player_name FROM player")
@@ -305,11 +300,12 @@ def process_total_query(query):
     else:
         return ''
 
-
-# function to parse user input
+#parses user input
 def parse(user_input):
+    #all of the columns in the db
     total_cols = ['goals for', 'goals against', 'audience', 'points', 'players', 'matches', 'wins', 'draws', 'losses']
 
+    #all of the column namesthat are readable - a user can say "goals against" instead of goal_agnst
     col_names_readable = list(replacement_dictionary.keys())
     # this pulls the column names with some extra non-useful data
     match_cols = retrieve_cols('matches')
@@ -419,20 +415,24 @@ def compare_input_length(parsed_input, user_input):
     return parsed_input
 
 
-# gets user input and calls the correct process query function
 def get_query():
     print("Please enter your query as described by the structure above: ")
     user_input = input(" => ")
     parsed_input = validate_input(user_input)
     parsed_input = compare_input_length(parsed_input, user_input)
+    #used for results query
     if parsed_input[1] == 'won by' or parsed_input[1] == 'lost by' or parsed_input[1] == 'tied by':
         query_info = process_res_query(parsed_input)
+    #used for play queries
     elif parsed_input[1] == 'plays in' or parsed_input[1] == 'play in':
         query_info = process_play_query(parsed_input)
+    #used for position queries
     elif parsed_input[0] == 'position':
         query_info = process_position_query(parsed_input)
+    #used for total queries
     elif parsed_input[0] == "total":
         query_info = process_total_query(parsed_input)
+    #used for win percent queries
     elif parsed_input[0] == 'win percentage':
         query_info = process_wp_query(parsed_input)
     # used for player origin queries

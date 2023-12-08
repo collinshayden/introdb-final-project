@@ -83,8 +83,7 @@ def print_table(con, table):
     for row in rows:
         print(row)
 
-
-# prints the result of a query
+#prints the query in a nice table
 def print_query(con, query):
     result = con.execute(query)
     print("\n\nBelow is the result of your query!")
