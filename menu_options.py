@@ -201,8 +201,13 @@ def query_help():
 
 def query(con):
     query_help()
-    query_statement = get_query()
-    print_query(con, query_statement)
+    try:
+        query_statement = get_query()
+        print_query(con, query_statement)
+    except Exception as e:
+        print("Invalid query, try again: ")
+        query_statement = get_query()
+        print_query(con, query_statement)
 
 
 def visualizations():
@@ -211,9 +216,11 @@ def visualizations():
                         "a. All goals scored for/against every team\n"
                         "b. Number of total players in each position\n"
                         "c. Win percentage of each team\n"
-                        "d. Audience of each game played by a team\n")
-    while user_choice not in ['a', 'b', 'c', 'd']:
-        user_choice = input("Invalid selection please select a letter a-e.")  # get a list of teams
+                        "d. Audience of each game played by a team\n"
+                        "e. Number of wins for each team\n")
+
+    while user_choice not in ['a', 'b', 'c', 'd', "e"]:
+        user_choice = input("Invalid selection please select a letter a-e: ")  # get a list of teams
     teams = execute_query("SELECT team_name FROM team")
 
     if user_choice == 'a':
@@ -287,5 +294,15 @@ def visualizations():
         plt.xlabel("Team")
         plt.ylabel("Total Audience")
         plt.title("Total Audience of Each Team")
+    elif user_choice == "e":
+        cur.execute(f'''SELECT wins as "# wins", count(wins)  as "# teams" FROM team group by wins''')
+        res = cur.fetchall()
+        team_with_scores = [row[1] for row in res]
+        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(team_with_scores)))
+        fig, ax = plt.subplots()
+        ax.pie(team_with_scores, colors=colors, radius=3, center=(4, 4),
+               wedgeprops={"linewidth": 1, "edgecolor": "white"}, frame=True, )
+        plt.legend(title='# of wins / # of teams', labels=res, loc='upper right')
+        plt.title("Teams grouped by # of wins")
     plt.tight_layout()
     plt.show(block=False)
