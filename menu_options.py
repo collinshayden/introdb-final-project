@@ -3,7 +3,9 @@
 from utils import *
 from query_parser import *
 from query_parser import get_query
-import matplotlib.pyplot as plt
+import pandas as pd
+from matplotlib import pyplot as plt
+import numpy as np
 
 
 def add(con):
@@ -209,9 +211,11 @@ def query(con):
         query_statement = get_query()
         print_query(con, query_statement)
 
-
-def visualizations():
-    # prompt user
+def show_table(con):
+    table, table_names = select_table(con)
+    print_table(con, table)
+def visualizations(cur):
+    #prompt user
     user_choice = input("Please select one of the following statistics to visualize.\n"
                         "a. All goals scored for/against every team\n"
                         "b. Number of total players in each position\n"
@@ -224,8 +228,8 @@ def visualizations():
     teams = execute_query("SELECT team_name FROM team")
 
     if user_choice == 'a':
-        # get all the teams goals for and against
-        cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
+        # get all of the teams goals for and against
+        goals = cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
         goals = cur.fetchall()
         # pull the data and put it into lists for plotting
         team_names = []
@@ -236,8 +240,8 @@ def visualizations():
             goals_for.append(team[1])
             goals_against.append(team[2])
         x_axis = np.arange(0, len(team_names))
-        plt.bar(x_axis - 0.2, goals_for, 0.4, label="Goals For")
-        plt.bar(x_axis + 0.2, goals_against, 0.4, label="Goals Against")
+        plt.bar(x_axis - 0.2, goals_for, 0.4, label = "Goals For" )
+        plt.bar(x_axis +0.2, goals_against, 0.4, label = "Goals Against" )
         plt.xticks(x_axis, team_names)
         plt.xlabel("Team")
         plt.ylabel("Number of Goals")

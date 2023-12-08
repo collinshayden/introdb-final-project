@@ -7,12 +7,12 @@ from menu_options import *
 import query_parser
 
 con = sqlite3.connect("soccer.db")
-
+cur = con.cursor()
 
 def nav():
     print(f"\nWelcome!")
     option = ""
-    while option not in ["a", "b", "c", "d", "e", "f", "h"]:
+    while option not in ["a", "b", "c", "d", "e", "f", "h", "g"]:
         print("Choose an option: ")
         print(" (a) Add")
         print(" (b) Remove")
@@ -20,9 +20,10 @@ def nav():
         print(" (d) Stats")
         print(" (e) Query")
         print(" (f) Visualizations")
+        print(" (g) Show a Table")
         print(" (h) Quit")
         option = input(" => ").lower()
-        if option not in ["a", "b", "c", "d", "e", "f", "h"]:
+        if option not in ["a", "b", "c", "d", "e", "f", "h", "g"]:
             print("Invalid option.")
 
     if option == "a":
@@ -36,7 +37,9 @@ def nav():
     elif option == "e":
         query(con)
     elif option == "f":
-        visualizations()
+        visualizations(cur)
+    elif option == "g":
+        show_table(con)
     else:
         print("Quitting program.")
         return
