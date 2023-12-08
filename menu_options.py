@@ -1,16 +1,20 @@
 # functions called from nav
 
-from utils import *
+from matplotlib import pyplot as plt
+
 from query_parser import *
 from query_parser import get_query
-from matplotlib import pyplot as plt
-import numpy as np
+from utils import *
 
 
+# function to add a row to a user selected table
 def add(con):
+    # user input for which table to add to
     selected_table, table_names = select_table(con)
 
     print(f"You selected to add to '{selected_table}'")
+
+    # inserting into table
     if selected_table == "city":
         city_id = input("Enter the city id: ")
         city_name = input("Enter the city name: ")
@@ -78,16 +82,30 @@ def add(con):
     print_table(con, selected_table)
 
 
+# function to remove a row from a table
 def remove(con):
+    # user input to select table
     selected_table, table_names = select_table(con)
     print(f"You selected to remove from '{selected_table}'")
     print(f"\nThese are the current entries in the {selected_table} table: \n")
     print_table(con, selected_table)
 
     primary_key = f'{selected_table}_id'
-    id = input(f"Enter the {primary_key} of the row to be removed: ")
+    valid_key = False
+    # getting user input to select and remove row
+    while not valid_key:
+        id = input(f"Enter the {primary_key} of the row to be deleted: ")
 
-    con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
+        cursor = con.cursor()
+        con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
+        row = cursor.fetchone()  # Fetch a single row
+        if row:
+            print(row)
+            valid_key = True
+        else:
+            print("No matching row found, please try again")
+
+    # removing from table
 
     con.commit()
 
@@ -95,7 +113,9 @@ def remove(con):
     print_table(con, selected_table)
 
 
+# function to modify row in a table
 def modify(con):
+    # user input to select table
     selected_table, table_names = select_table(con)
     print(f"You selected to modify a row from '{selected_table}'")
     print(f"\nThese are the current entries in the {selected_table} table: \n")
@@ -103,7 +123,7 @@ def modify(con):
 
     primary_key = f'{selected_table}_id'
     valid_key = False
-
+    # getting user input to select and modify table
     while not valid_key:
         id = input(f"Enter the {primary_key} of the row to be modified: ")
 
@@ -133,6 +153,7 @@ def modify(con):
     print_table(con, selected_table)
 
 
+# function to calculate stats function on a table
 def stats(con):
     operations = ["min", "max", "std", "median", "avg"]
     print("Below is a list of all numerical columns paired with their respective tables.")
@@ -157,6 +178,7 @@ def stats(con):
         if selected_operation not in operations:
             print("Invalid selection.")
 
+    # doing stats operations
     if selected_operation == "min":
         cursor = con.cursor()
         cursor.execute(f"SELECT MIN({selected_column}) FROM {selected_table}")
@@ -178,6 +200,7 @@ def stats(con):
         print(f"The mean {selected_column} is {mean:.2f}")
 
 
+# function to print a help message for the query function
 def query_help():
     print("This program allows you to make various queries to our database which contains information about soccer "
           "games. Some example queries are listed below: ")
@@ -200,6 +223,7 @@ def query_help():
           "17. teams with points > [n]\n")
 
 
+# function to prompt user for a query and execute
 def query(con):
     query_help()
     try:
@@ -211,11 +235,13 @@ def query(con):
         print_query(con, query_statement)
 
 
+# function to show all values in a table
 def show_table(con):
     table, table_names = select_table(con)
     print_table(con, table)
 
 
+# function to display plots from menu
 def visualizations(cur):
     # prompt user
     user_choice = input("Please select one of the following statistics to visualize.\n"
@@ -229,6 +255,7 @@ def visualizations(cur):
         user_choice = input("Invalid selection please select a letter a-e: ")  # get a list of teams
     teams = execute_query("SELECT team_name FROM team")
 
+    # create plots
     if user_choice == 'a':
         # get all the teams goals for and against
         cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")

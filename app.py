@@ -2,16 +2,16 @@
 # Hayden Collins & Abbey Knobel
 # Created on 2023/11/28
 
-import sqlite3
 from menu_options import *
-import query_parser
 
 con = sqlite3.connect("soccer.db")
 cur = con.cursor()
 
 
+# function to display the nav
 def nav():
     print(f"\nWelcome!")
+    # user input to choose menu option
     option = ""
     while option not in ["a", "b", "c", "d", "e", "f", "h", "g"]:
         print("Choose an option: ")
@@ -27,6 +27,7 @@ def nav():
         if option not in ["a", "b", "c", "d", "e", "f", "h", "g"]:
             print("Invalid option.")
 
+    # calling menu functions
     if option == "a":
         add(con)
     elif option == "b":
@@ -45,6 +46,7 @@ def nav():
         print("Quitting program.")
         return
 
+    # prompting user to return to nav or quit
     option = ""
     while option not in ["a", "b"]:
         print("\nChoose an option: ")
@@ -60,6 +62,7 @@ def nav():
         return
 
 
+# main function
 def main():
     nav()
     con.close()

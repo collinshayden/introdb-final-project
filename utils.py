@@ -84,18 +84,23 @@ def print_table(con, table):
         print(row)
 
 
+# prints the result of a query
 def print_query(con, query):
     result = con.execute(query)
     print("\n\nBelow is the result of your query!")
     print("----------------------------------------")
     result = result.fetchall()
+    # if there are no values in the query return
     if len(result) == 0:
         print("There were no results for your query.")
+    # if there is only one value, index into result to remove ()
     elif len(result) == 1:
         print(result[0][0])
+    # if there are many results, but only one value in each row, print the contents without ()
     elif len(result[0]) == 1:
         for row in result:
             print(row[0])
+    # otherwise print all rows
     else:
         for row in result:
             print(row)

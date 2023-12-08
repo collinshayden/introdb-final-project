@@ -1,5 +1,6 @@
-from pyparsing import *
 import sqlite3
+
+from pyparsing import *
 
 # connect to sqlite
 con = sqlite3.connect('soccer.db')
@@ -53,6 +54,7 @@ def get_col_type(table_names):
     return col_type_dicts
 
 
+# function to process queries that include "with"
 def process_with_query(query):
     # get the query information
     query_sub_table = query[0]
@@ -99,6 +101,7 @@ def get_query_type(query_column):
     return [query_table, typ]
 
 
+# function to process queries that include "win percentage"
 def process_wp_query(query):
     players = execute_query("SELECT DISTINCT player_name from player")
     name = query[2]
@@ -118,6 +121,7 @@ def process_wp_query(query):
         WHERE team.team_name = "{name}" GROUP BY team.team_name '''
 
 
+# function to process queries that include "won by, tied by, lost by"
 def process_res_query(query):
     subject = query[2]
     res = query[1]
@@ -141,6 +145,7 @@ def process_res_query(query):
         OR matches.team2_id = player.team_id AND matches.team2_result = '{res}')'''
 
 
+# function to process queries that include "in"
 def process_location_query(query):
     # get query info
     query_sub = query[0]
@@ -162,6 +167,7 @@ def process_location_query(query):
         return f'''SELECT DISTINCT venue_name FROM venue join city on venue.city_id=city.city_id where city.city_name="{query_loc}"; '''
 
 
+# function to process queries that include "player"
 def process_player_query(query):
     player_name = query[0]
     player_team = query[2]
@@ -180,6 +186,7 @@ def process_player_query(query):
     return f'''SELECT player_name FROM player join {join_table} where {col} = "{player_team}" '''
 
 
+# function to process queries that include "play in"
 def process_play_query(query):
     # pull info from query
     query_sub = query[0]
@@ -217,11 +224,13 @@ def process_play_query(query):
             return f'''SELECT DISTINCT team_name from ((team join matches) join venue) join city where city_name = "{playing_pos}"'''
 
 
+# function to process queries that include "position"
 def process_position_query(query):
     name = query[2]
     return f'''SELECT posi_to_play from player where player_name = "{name}" '''
 
 
+# function to process queries that include "total"
 def process_total_query(query):
     teams = execute_query("SELECT team_name FROM team")
     players = execute_query("SELECT player_name FROM player")
@@ -297,6 +306,7 @@ def process_total_query(query):
         return ''
 
 
+# function to parse user input
 def parse(user_input):
     total_cols = ['goals for', 'goals against', 'audience', 'points', 'players', 'matches', 'wins', 'draws', 'losses']
 
@@ -409,6 +419,7 @@ def compare_input_length(parsed_input, user_input):
     return parsed_input
 
 
+# gets user input and calls the correct process query function
 def get_query():
     print("Please enter your query as described by the structure above: ")
     user_input = input(" => ")
