@@ -3,7 +3,6 @@
 from utils import *
 from query_parser import *
 from query_parser import get_query
-import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
 
@@ -206,16 +205,19 @@ def query(con):
     try:
         query_statement = get_query()
         print_query(con, query_statement)
-    except Exception as e:
+    except Exception:
         print("Invalid query, try again: ")
         query_statement = get_query()
         print_query(con, query_statement)
 
+
 def show_table(con):
     table, table_names = select_table(con)
     print_table(con, table)
+
+
 def visualizations(cur):
-    #prompt user
+    # prompt user
     user_choice = input("Please select one of the following statistics to visualize.\n"
                         "a. All goals scored for/against every team\n"
                         "b. Number of total players in each position\n"
@@ -228,8 +230,8 @@ def visualizations(cur):
     teams = execute_query("SELECT team_name FROM team")
 
     if user_choice == 'a':
-        # get all of the teams goals for and against
-        goals = cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
+        # get all the teams goals for and against
+        cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
         goals = cur.fetchall()
         # pull the data and put it into lists for plotting
         team_names = []
@@ -240,8 +242,8 @@ def visualizations(cur):
             goals_for.append(team[1])
             goals_against.append(team[2])
         x_axis = np.arange(0, len(team_names))
-        plt.bar(x_axis - 0.2, goals_for, 0.4, label = "Goals For" )
-        plt.bar(x_axis +0.2, goals_against, 0.4, label = "Goals Against" )
+        plt.bar(x_axis - 0.2, goals_for, 0.4, label="Goals For")
+        plt.bar(x_axis + 0.2, goals_against, 0.4, label="Goals Against")
         plt.xticks(x_axis, team_names)
         plt.xlabel("Team")
         plt.ylabel("Number of Goals")
@@ -267,7 +269,7 @@ def visualizations(cur):
         win_percentages = []
         names = []
         for team_name in teams:
-            wp = cur.execute(f'''SELECT (SUM (CASE 
+            cur.execute(f'''SELECT (SUM (CASE 
             WHEN matches.team1_id = team.team_id  and matches.team1_result = "W" THEN 1.0
             WHEN matches.team2_id = team.team_id and matches.team2_result = "W" THEN 1.0
             ELSE 0 END) / COUNT(*) * 100) as win_percentage FROM team JOIN matches 
@@ -287,7 +289,7 @@ def visualizations(cur):
         total_aud = []
         names = []
         for team_name in teams:
-            aud = cur.execute(f'''SELECT sum(audience) FROM team join matches on matches.team1_id = team.team_id 
+            cur.execute(f'''SELECT sum(audience) FROM team join matches on matches.team1_id = team.team_id 
             or matches.team2_id = team.team_id where team_name = "{team_name}" ''')
             names.append(team_name[:3])
             aud = cur.fetchall()

@@ -9,6 +9,7 @@ import query_parser
 con = sqlite3.connect("soccer.db")
 cur = con.cursor()
 
+
 def nav():
     print(f"\nWelcome!")
     option = ""
