@@ -1,32 +1,28 @@
 # functions called from nav
 
-from matplotlib import pyplot as plt
-
+from utils import *
 from query_parser import *
 from query_parser import get_query
-from utils import *
-
+from matplotlib import pyplot as plt
+import numpy as np
 
 # function to add a row to a user selected table
 def add(con):
-    # user input for which table to add to
     selected_table, table_names = select_table(con)
-
+     # user input for which table to add to
     print(f"You selected to add to '{selected_table}'")
-
-    # inserting into table
     if selected_table == "city":
         city_id = input("Enter the city id: ")
         city_name = input("Enter the city name: ")
-        con.execute("INSERT INTO city ('city_id', 'city_name') VALUES (?, ?)", (city_id, city_name))
-
+        con.execute("INSERT INTO city ('city_id', 'city_name') VALUES (?, ?)", (city_id, city_name))    
+    # inserting into table
     elif selected_table == "venue":
         venue_id = input("Enter the venue id: ")
         venue_name = input("Enter the venue name: ")
         city_id = input("Enter the city id: ")
         con.execute("INSERT INTO venue ('venue_id', 'venue_name', 'city_id') VALUES (?, ?, ?)",
                     (venue_id, venue_name, city_id))
-
+    
     elif selected_table == "team":
         team_id = input("Enter the team_id: ")
         team_name = input("Enter the team name: ")
@@ -40,11 +36,11 @@ def add(con):
         points = input("Enter the # of points: ")
 
         con.execute("INSERT INTO team "
-                    "('team_id', 'team_name', 'team_group', 'won', 'lost', 'draw', 'goal_for', 'goal_agnst', 'goal_diff', 'points') "
+                    "('team_id', 'team_name', 'team_group', 'wins', 'losses', 'draws', 'goal_for', 'goal_agnst', 'goal_diff', 'points') "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (team_id, team_name, team_group, won, lost, draw, goal_for, goal_agnst, goal_diff, points))
 
-    elif selected_table == "match":
+    elif selected_table == "matches":
         match_id = input("Enter the match number: ")
         play_stage = input("Enter the play stage: ")
         play_date = input("Enter the date of the match: ")
@@ -57,8 +53,8 @@ def add(con):
         team1_result = input("Enter the the first team's result: ")
         team2_result = input("Enter the the second team's result: ")
 
-        con.execute("INSERT INTO match "
-                    "('match_id', 'play_stage', 'play_date', 'venue_id', 'audience', 'team1_id', 'team2_id', "
+        con.execute("INSERT INTO matches "
+                    "('match_id', 'stage', 'date', 'venue_id', 'audience', 'team1_id', 'team2_id', "
                     "'team1_goals', 'team2_goals', 'team1_result', 'team2_result') "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
                         match_id, play_stage, play_date, venue_id, audience, team1_id, team2_id, team1_goals,
@@ -81,29 +77,27 @@ def add(con):
     print("Success! Below is the updated table.")
     print_table(con, selected_table)
 
-
 # function to remove a row from a table
 def remove(con):
     # user input to select table
     selected_table, table_names = select_table(con)
     print(f"You selected to remove from '{selected_table}'")
     print(f"\nThese are the current entries in the {selected_table} table: \n")
-    print_table(con, selected_table)
-
-    primary_key = f'{selected_table}_id'
-    valid_key = False
     # getting user input to select and remove row
-    id = input(f"Enter the {primary_key} of the row to be deleted: ")
-
-    con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
-
+    print_table(con, selected_table)
+    if selected_table == 'matches':
+        primary_key = 'match_id'
+    else:
+        primary_key = f'{selected_table}_id'
+    id = input(f"Enter the {primary_key} of the row to be removed: ")
+    
     # removing from table
+    con.execute(f"DELETE FROM {selected_table} WHERE {primary_key} = ?", (id,))
 
     con.commit()
 
-    print("Below is the updated table.")
+    print("Success! Below is the updated table.")
     print_table(con, selected_table)
-
 
 # function to modify row in a table
 def modify(con):
@@ -112,8 +106,11 @@ def modify(con):
     print(f"You selected to modify a row from '{selected_table}'")
     print(f"\nThese are the current entries in the {selected_table} table: \n")
     print_table(con, selected_table)
-
-    primary_key = f'{selected_table}_id'
+    
+    if selected_table == "matches":
+        primary_key = "match_id"
+    else:
+        primary_key = f'{selected_table}_id'
     valid_key = False
     # getting user input to select and modify table
     while not valid_key:
@@ -144,7 +141,6 @@ def modify(con):
     print("Success! Below is the updated table.")
     print_table(con, selected_table)
 
-
 # function to calculate stats function on a table
 def stats(con):
     operations = ["min", "max", "std", "median", "avg"]
@@ -169,8 +165,8 @@ def stats(con):
         selected_operation = input("Choose an operation to perform: ").lower()
         if selected_operation not in operations:
             print("Invalid selection.")
-
-    # doing stats operations
+            
+   # doing stats operations
     if selected_operation == "min":
         cursor = con.cursor()
         cursor.execute(f"SELECT MIN({selected_column}) FROM {selected_table}")
@@ -191,12 +187,12 @@ def stats(con):
         mean = calculate_stats(con, selected_column, selected_table, selected_operation)
         print(f"The mean {selected_column} is {mean:.2f}")
 
-
 # function to print a help message for the query function
 def query_help():
     print("This program allows you to make various queries to our database which contains information about soccer "
-          "games. Some example queries are listed below: ")
-    print("1. games won by [player_name/team_name]\n"
+          "games. Some players names are Aaron Hughes, Mergim Mavraj, & Armando Sadiku and some teams are"
+          "France, Germany & Argentina. Some example queries are listed below: ")
+    print("1. games won by [team_name]\n"
           "2. position of [player_name]\n"
           "3. total players of [team_name]\n"
           "4. total [audience/goals for/matches/wins/losses] of [player_name/team_name]\n"
@@ -214,7 +210,6 @@ def query_help():
           "16. players play in [match_id]\n"
           "17. teams with points > [n]\n")
 
-
 # function to prompt user for a query and execute
 def query(con):
     query_help()
@@ -226,12 +221,10 @@ def query(con):
         query_statement = get_query()
         print_query(con, query_statement)
 
-
 # function to show all values in a table
 def show_table(con):
     table, table_names = select_table(con)
     print_table(con, table)
-
 
 # function to display plots from menu
 def visualizations(cur):
@@ -247,7 +240,6 @@ def visualizations(cur):
         user_choice = input("Invalid selection please select a letter a-e: ")  # get a list of teams
     teams = execute_query("SELECT team_name FROM team")
 
-    # create plots
     if user_choice == 'a':
         # get all the teams goals for and against
         cur.execute("SELECT team_name, goal_for, goal_agnst FROM team")
@@ -331,3 +323,4 @@ def visualizations(cur):
         plt.title("Teams grouped by # of wins")
     plt.tight_layout()
     plt.show(block=False)
+
