@@ -8,7 +8,7 @@ def select_table(con):
     tables = con.execute("SELECT name FROM sqlite_master WHERE type='table';")
     # TODO make this cleaner
     table_names = []
-    print("Select a table to edit:")
+    print("Select a table:")
     for name in tables.fetchall():
         print(name[0])
         table_names.append(name[0])
